@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This is a *temporary* repo manifest for early fwsdk
+     experimentation.  This location is not its final home.
+
+     We need to relocate it to either the main chromiumos manifest
+     (maybe by using "-m fwsdk.xml"?), or a separate manifest
+     repository at a later point once we figure out the infrastructure
+     implications of either location. -->
+<manifest>
+  <default revision="refs/heads/main"
+           remote="cros"
+           sync-j="16" />
+
+  <!-- Remotes -->
+  <remote name="cros"
+          fetch="https://chromium.googlesource.com"
+          review="https://chromium-review.googlesource.com">
+    <annotation name="public" value="true" />
+  </remote>
+
+  <!-- Repohooks -->
+  <project path="src/repohooks"
+           name="chromiumos/repohooks" />
+  <repo-hooks in-project="chromiumos/repohooks"
+              enabled-list="pre-upload" />
+
+  <!-- Projects -->
+  <project path="chromite"
+           name="chromiumos/chromite" >
+    <copyfile src="AUTHORS" dest="AUTHORS" />
+    <copyfile src="LICENSE" dest="LICENSE" />
+  </project>
+  <project path="src/platform/depthcharge"
+           name="chromiumos/platform/depthcharge" />
+  <project path="src/platform/firmware"
+           name="chromiumos/platform/firmware" />
+  <project path="src/platform/ec"
+           name="chromiumos/platform/ec" />
+  <project path="src/platform/rules_cros_firmware"
+           name="chromiumos/platform/rules_cros_firmware">
+    <!-- Symlink the WORKSPACE file so bazel finds it. -->
+    <linkfile src="WORKSPACE" dest="src/WORKSPACE" />
+  </project>
+  <project path="src/platform/vboot_reference"
+           name="chromiumos/platform/vboot_reference" />
+  <project path="src/third_party/coreboot"
+           name="chromiumos/third_party/coreboot"
+           revision="refs/heads/chromeos-2016.05" />
+  <project path="src/third_party/coreboot/3rdparty/amd_blobs"
+           name="chromiumos/third_party/coreboot/amd_blobs"
+           revision="refs/heads/chromeos" />
+  <project path="src/third_party/coreboot/3rdparty/blobs"
+           name="chromiumos/third_party/coreboot/blobs"
+           revision="refs/heads/master" />
+  <project path="src/third_party/coreboot/3rdparty/intel-microcode"
+           name="chromiumos/third_party/coreboot/intel-microcode"
+           revision="refs/heads/master" />
+  <project path="src/third_party/coreboot/3rdparty/libgfxinit"
+           name="chromiumos/third_party/coreboot/libgfxinit" />
+  <project path="src/third_party/coreboot/3rdparty/libhwbase"
+           name="chromiumos/third_party/coreboot/libhwbase" />
+  <project path="src/third_party/coreboot/3rdparty/qc_blobs"
+           name="chromiumos/third_party/coreboot/qc_blobs"
+           revision="refs/heads/upstream/master" />
+  <project path="src/third_party/cryptoc"
+           name="chromiumos/third_party/cryptoc" />
+  <project path="src/third_party/edk2"
+           name="chromiumos/third_party/edk2"
+           revision="refs/heads/chromeos-2017.08" />
+  <project path="src/third_party/u-boot/files"
+           name="chromiumos/third_party/u-boot"
+           revision="refs/heads/chromeos-v2022.01" />
+  <project path="src/third_party/zephyr/cmsis"
+           name="chromiumos/third_party/zephyr/cmsis"
+           revision="refs/heads/chromeos-main" />
+  <project path="src/third_party/zephyr/hal_stm32"
+           name="chromiumos/third_party/zephyr/hal_stm32"
+           revision="refs/heads/chromeos-main" />
+  <project path="src/third_party/zephyr/main"
+           name="chromiumos/third_party/zephyr" />
+  <project path="src/third_party/zephyr/nanopb"
+           name="chromiumos/third_party/zephyr/nanopb" />
+</manifest>
