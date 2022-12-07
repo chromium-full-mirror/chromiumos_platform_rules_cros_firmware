@@ -39,7 +39,7 @@
   <project path="src/platform/rules_cros_firmware"
            name="chromiumos/platform/rules_cros_firmware">
     <!-- Symlink the WORKSPACE file so bazel finds it. -->
-    <linkfile src="WORKSPACE" dest="src/WORKSPACE" />
+    <linkfile src="bazel.WORKSPACE" dest="src/WORKSPACE" />
   </project>
   <project path="src/platform/vboot_reference"
            name="chromiumos/platform/vboot_reference" />
