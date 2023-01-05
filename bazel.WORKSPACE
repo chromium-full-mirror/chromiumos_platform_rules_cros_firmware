@@ -8,6 +8,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "coreboot_sdk",
+    add_prefix = "coreboot_sdk_root",
     build_file = "//platform/rules_cros_firmware/cros_firmware:BUILD.coreboot_sdk",
     sha256 = "ff716f2d90432af9b3778e164f0a9a6958a91267008960901bf7be96f5e3db0b",
     urls = [

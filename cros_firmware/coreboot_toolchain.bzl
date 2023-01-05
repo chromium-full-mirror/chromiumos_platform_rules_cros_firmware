@@ -31,19 +31,36 @@ VERSION = "11.2.0"
 #
 
 def filemaps(name = ""):
+    targets = []
+
+    def _filegroup(name, srcs):
+        targets.append(name)
+        native.filegroup(name = name, srcs = srcs)
+
     for arch in ARCHES:
-        native.filegroup(
-            name = "{name}{arch}_ldscripts".format(arch = arch, name = name),
-            srcs = native.glob(["{arch}/lib/**/*".format(arch = arch)]),
+        _filegroup(
+            "{name}{arch}_ldscripts".format(arch = arch, name = name),
+            native.glob(["{arch}/lib/**/*".format(arch = arch)]),
         )
 
-        native.filegroup(
-            name = "{name}{arch}_includes".format(arch = arch, name = name),
-            srcs = native.glob(["lib/gcc/{arch}/{version}/include/*.h".format(arch = arch, version = VERSION)]),
+        _filegroup(
+            "{name}{arch}_includes".format(arch = arch, name = name),
+            native.glob(["lib/gcc/{arch}/{version}/include/*.h"
+                .format(arch = arch, version = VERSION)]),
         )
 
         for tool in TOOLS:
-            native.filegroup(
-                name = "{name}{arch}_{tool}".format(arch = arch, tool = tool, name = name),
-                srcs = ["bin/{arch}-{tool}".format(arch = arch, tool = tool), "{arch}/bin/{tool}".format(arch = arch, tool = tool)],
+            _filegroup(
+                "{name}{arch}_{tool}"
+                    .format(arch = arch, tool = tool, name = name),
+                [
+                    "bin/{arch}-{tool}".format(arch = arch, tool = tool),
+                    "{arch}/bin/{tool}".format(arch = arch, tool = tool),
+                ],
             )
+
+    native.filegroup(
+        name = "coreboot_sdk",
+        srcs = targets,
+        visibility = ["//visibility:public"],
+    )
