@@ -18,17 +18,10 @@ $ repo init -u https://chromium.googlesource.com/chromiumos/platform/rules_cros_
 $ repo sync
 ```
 
-## Formatting starlark files
+## Formatting files
 
-The `buildifier` command should be used to auto-format source files.
-
-To install it:
-
-``` shellsession
-$ go install github.com/bazelbuild/buildtools/buildifier@latest
-```
-
-Make sure `${HOME}/go/bin` is in your `PATH`.
+All files should be formatted using `cros format`.  Pre-upload checks
+should validate you did this.
 
 ## Submitting changes
 
