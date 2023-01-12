@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- This is a *temporary* repo manifest for early fwsdk
      experimentation.  This location is not its final home.
-
+     
      We need to relocate it to either the main chromiumos manifest
      (maybe by using "-m fwsdk.xml"?), or a separate manifest
      repository at a later point once we figure out the infrastructure
@@ -26,16 +26,16 @@
 
   <!-- Projects -->
   <project path="chromite"
-           name="chromiumos/chromite" >
+           name="chromiumos/chromite">
     <copyfile src="AUTHORS" dest="AUTHORS" />
     <copyfile src="LICENSE" dest="LICENSE" />
   </project>
   <project path="src/platform/depthcharge"
            name="chromiumos/platform/depthcharge" />
-  <project path="src/platform/firmware"
-           name="chromiumos/platform/firmware" />
   <project path="src/platform/ec"
            name="chromiumos/platform/ec" />
+  <project path="src/platform/firmware"
+           name="chromiumos/platform/firmware" />
   <project path="src/platform/rules_cros_firmware"
            name="chromiumos/platform/rules_cros_firmware">
     <!-- Symlink the WORKSPACE file so bazel finds it. -->
