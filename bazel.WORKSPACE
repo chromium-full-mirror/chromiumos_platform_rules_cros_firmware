@@ -5,6 +5,7 @@
 workspace(name = "cros_firmware")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("//platform/rules_cros_firmware/repositories:depot_tools.bzl", "depot_tools")
 
 http_archive(
     name = "coreboot_sdk",
@@ -14,4 +15,9 @@ http_archive(
     urls = [
         "https://storage.googleapis.com/chromeos-localmirror/fwsdk/experimental/distfiles/coreboot-sdk-2022-12-07.tar.zst",
     ],
+)
+
+depot_tools(
+    name = "depot_tools",
+    build_file = "//platform/rules_cros_firmware/repositories:BUILD.depot_tools",
 )
