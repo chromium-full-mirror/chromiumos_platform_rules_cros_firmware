@@ -3,25 +3,32 @@
 # found in the LICENSE file.
 
 load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+load("@rules_python//python:pip.bzl", "pip_install")
+load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 
-py_library(
-    name = "zmake-lib",
-    srcs = ["@ec//:zmake-srcs"],
-)
+# Next steps for build_krabby:
+# Current failure: binman: cannot import name 'QUIET_NOTFOUND' from 'libfdt' (unknown location)
+# Seems like we're going to need to have a compiled u-boot to depend on.
 
-py_binary(
-    name = "zmake-bin",
-    srcs = ["@ec//:zephyr/zmake/bazel_main.py"],
-    main = "@ec//:zephyr/zmake/bazel_main.py",
-    deps = [":zmake-lib"],
-)
-
-genrule(
-    name = "zmake_list_projects",
-    outs = ["zmake_list_projects.log"],
-    cmd = "$(PYTHON3) $(locations :zmake-bin) list-projects >& $@",
-    toolchains = ["@rules_python//python:current_py_toolchain"],
-    tools = [
-        ":zmake-bin",
+# TODO binman inclusion should be in BUILD.ec
+run_binary(
+    name = "build_krabby",
+    srcs = [
+        "@ec//:ec_src",
+        "@u_boot//:binman_path",
+        "@zephyr//:src",
     ],
+    outs = ["krabby.log"],
+    args = [
+        "--modules-dir",
+        "external",
+        "--zephyr-base",
+        "external/zephyr",
+        "build",
+        "krabby",
+        "--extra-cflags='-DCMAKE_BUILD_TYPE=Debug'",
+        "-DUSE_CCACHE=0",
+    ],
+    env = {"TOOL_PATH_binman": "$(location @u_boot//:binman_path)"},
+    tool = "@ec//:zmake",
 )

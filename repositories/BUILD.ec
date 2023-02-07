@@ -3,9 +3,33 @@
 # found in the LICENSE file.
 
 filegroup(
-    name = "zmake-srcs",
+    name = "zmake_src",
     srcs = glob(["zephyr/zmake/**/*.py"]),
+)
+
+filegroup(
+    name = "ec_src",
+    srcs = glob([
+        "builtin/**",
+        "common/**",
+        "driver/**",
+        "include/**",
+        "power/**",
+        "zephyr/**",
+        "fuzz/**",
+        "test/**",
+        "*",
+    ]),
     visibility = ["//visibility:public"],
 )
 
-exports_files(glob(["zephyr/**/*"]))
+py_binary(
+    name = "zmake",
+    srcs = [":zmake_src"],
+    data = [
+        "@ec//:ec_src",
+    ],
+    main = "//:zephyr/zmake/bazel_main.py",
+    visibility = ["//visibility:public"],
+    deps = ["@zephyr//:py_deps", "@u_boot//:binman"],
+)

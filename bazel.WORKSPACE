@@ -7,6 +7,21 @@ workspace(name = "cros_firmware")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("//platform/rules_cros_firmware/repositories:depot_tools.bzl", "depot_tools")
 
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "bazel_skylib",
+    sha256 = "f24ab666394232f834f74d19e2ff142b0af17466ea0c69a3f4c276ee75f6efce",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.4.0/bazel-skylib-1.4.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.4.0/bazel-skylib-1.4.0.tar.gz",
+    ],
+)
+
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
+bazel_skylib_workspace()
+
 http_archive(
     name = "coreboot_sdk",
     add_prefix = "coreboot_sdk_root",
@@ -28,6 +43,18 @@ new_local_repository(
     path = "platform/ec",
 )
 
+new_local_repository(
+    name = "zephyr",
+    build_file = "//platform/rules_cros_firmware/repositories:BUILD.zephyr",
+    path = "third_party/zephyr/main",
+)
+
+new_local_repository(
+    name = "u_boot",
+    build_file = "//platform/rules_cros_firmware/repositories:BUILD.u-boot",
+    path = "third_party/u-boot",
+)
+
 rules_python_version = "0.17.3"
 
 http_archive(
@@ -46,3 +73,14 @@ python_register_toolchains(
     # Available versions are listed in @rules_python//python:versions.bzl.
     python_version = "3.10.9",
 )
+
+load("@rules_python//python:pip.bzl", "pip_parse")
+
+pip_parse(
+    name = "zephyr_py_deps",
+    requirements_lock = "//platform/rules_cros_firmware/cros_firmware:zephyr-requirements-lock.txt",
+)
+
+load("@zephyr_py_deps//:requirements.bzl", "install_deps")
+
+install_deps()
