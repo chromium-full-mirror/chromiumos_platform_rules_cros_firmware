@@ -67,6 +67,8 @@
   <project path="src/third_party/edk2"
            name="chromiumos/third_party/edk2"
            revision="refs/heads/chromeos-2017.08" />
+  <project path="src/third_party/hdctools"
+           name="chromiumos/third_party/hdctools" />
   <project path="src/third_party/u-boot/files"
            name="chromiumos/third_party/u-boot"
            revision="refs/heads/chromeos-v2022.01" />
