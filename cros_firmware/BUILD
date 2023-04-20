@@ -18,7 +18,7 @@ run_binary(
         "@u_boot//:binman_path",
         "@zephyr//:src",
     ],
-    outs = ["krabby.log"],
+    outs = ["krabby_build"],
     args = [
         "--modules-dir",
         "external",
@@ -26,6 +26,8 @@ run_binary(
         "external/zephyr",
         "build",
         "krabby",
+        "-B",
+        "$(location krabby_build)",
         "--extra-cflags='-DCMAKE_BUILD_TYPE=Debug'",
         "-DUSE_CCACHE=0",
     ],

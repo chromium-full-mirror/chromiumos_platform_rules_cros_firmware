@@ -1,8 +1,10 @@
+# TODO: Validate SHAs!
 docopt==0.6.2
 packaging==23.0
 pyelftools==0.28
 pykwalify==1.8.0
-pylibfdt==1.7.0.post1
+# FIXME: This is a binman dep, not a zephyr dep
+pylibfdt @ https://storage.googleapis.com/chromeos-localmirror/fwsdk/experimental/distfiles/pylibfdt-1.7.0.post1-cp310-cp310-linux_x86_64.whl
 python-dateutil==2.8.2
 pyyaml==6.0
 ruamel.yaml.clib==0.2.7

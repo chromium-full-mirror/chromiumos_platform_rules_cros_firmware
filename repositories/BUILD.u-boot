@@ -19,8 +19,6 @@ py_binary(
     main = "//:files/tools/binman/main.py",
     visibility = ["//visibility:public"],
     deps = [
-        # FIXME: binman requires libs with c-extions
-        #        "@zephyr_py_deps_libfdt//:pkg",
-        #        "@zephyr_py_deps_swig//:pkg",
+        "@zephyr_py_deps_pylibfdt//:pkg",
     ],
 )
