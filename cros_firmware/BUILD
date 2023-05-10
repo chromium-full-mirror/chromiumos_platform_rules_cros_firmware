@@ -12,7 +12,7 @@ load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 
 # TODO binman inclusion should be in BUILD.ec
 run_binary(
-    name = "build_krabby",
+    name = "krabby",
     srcs = [
         "@ec//:ec_src",
         "@u_boot//:binman_path",
