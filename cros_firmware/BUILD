@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-load("@rules_python//python:defs.bzl", "py_binary", "py_library")
-load("@rules_python//python:pip.bzl", "pip_install")
 load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 
 # Next steps for build_krabby:
