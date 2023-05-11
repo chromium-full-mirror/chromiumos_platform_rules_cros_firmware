@@ -16,7 +16,7 @@ def ec_image_generator(firmware_target):
     run_binary(
         name = firmware_target,
         srcs = [
-            "@ec//:ec_src",
+            "@ec//:src",
             "@u_boot//:binman_path",
             "@zephyr//:src",
         ],

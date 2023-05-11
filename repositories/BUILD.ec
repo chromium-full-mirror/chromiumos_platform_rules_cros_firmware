@@ -8,7 +8,7 @@ filegroup(
 )
 
 filegroup(
-    name = "ec_src",
+    name = "src",
     srcs = glob([
         "builtin/**",
         "common/**",
@@ -27,7 +27,7 @@ py_binary(
     name = "zmake",
     srcs = [":zmake_src"],
     data = [
-        "@ec//:ec_src",
+        "@ec//:src",
     ],
     main = "//:zephyr/zmake/bazel_main.py",
     visibility = ["//visibility:public"],
