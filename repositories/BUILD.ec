@@ -10,6 +10,8 @@ filegroup(
 filegroup(
     name = "src",
     srcs = glob([
+        "baseboard/**",
+        "board/**",
         "builtin/**",
         "common/**",
         "driver/**",
@@ -18,6 +20,7 @@ filegroup(
         "zephyr/**",
         "fuzz/**",
         "test/**",
+        "third_party/**",
         "*",
     ]),
     visibility = ["//visibility:public"],
