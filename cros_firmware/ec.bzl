@@ -7,32 +7,41 @@
 
 load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 
-# Next steps for build_krabby:
-# Current failure: binman: cannot import name 'QUIET_NOTFOUND' from 'libfdt' (unknown location)
-# Seems like we're going to need to have a compiled u-boot to depend on.
-
-def ec_image_generator(firmware_target):
+def ec_image_generator(firmware_target, extra_modules = []):
     # TODO binman inclusion should be in BUILD.ec
+    srcs = [
+        "@u_boot//:binman_path",
+        "@zephyr//:src",
+        "@ec//:src",
+        "@coreboot_sdk//:coreboot_sdk_root",
+    ]
+
+    if "cmsis" in extra_modules:
+        srcs += ["@cmsis//:src"]
+
+    build_dir = firmware_target + "_ec_build"
+
     run_binary(
-        name = firmware_target,
-        srcs = [
-            "@ec//:src",
-            "@u_boot//:binman_path",
-            "@zephyr//:src",
-        ],
-        outs = ["krabby_build"],
+        name = firmware_target + "_ec",
+        srcs = srcs,
+        outs = [build_dir],
         args = [
             "--modules-dir",
             "external",
             "--zephyr-base",
             "external/zephyr",
             "build",
-            "krabby",
+            firmware_target,
             "-B",
-            "$(location krabby_build)",
+            "$(location {})".format(build_dir),
+            "-t",
+            "coreboot-sdk",
             "--extra-cflags='-DCMAKE_BUILD_TYPE=Debug'",
             "-DUSE_CCACHE=0",
         ],
-        env = {"TOOL_PATH_binman": "$(location @u_boot//:binman_path)"},
+        env = {
+            "TOOL_PATH_binman": "$(location @u_boot//:binman_path)",
+            "COREBOOT_SDK_ROOT": "$(location @coreboot_sdk//:coreboot_sdk_root)",
+        },
         tool = "@ec//:zmake",
     )
