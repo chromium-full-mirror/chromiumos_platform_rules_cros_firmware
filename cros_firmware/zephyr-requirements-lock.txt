@@ -1,4 +1,6 @@
 # TODO: Validate SHAs!
+# Required by cmsis
+colorama==0.4.6
 docopt==0.6.2
 packaging==23.0
 pyelftools==0.28

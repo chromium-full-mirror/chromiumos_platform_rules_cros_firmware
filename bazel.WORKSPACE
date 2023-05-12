@@ -55,6 +55,12 @@ new_local_repository(
     path = "third_party/u-boot",
 )
 
+new_local_repository(
+    name = "cmsis",
+    build_file = "//platform/rules_cros_firmware/repositories:BUILD.cmsis",
+    path = "third_party/zephyr/cmsis",
+)
+
 rules_python_version = "0.17.3"
 
 http_archive(

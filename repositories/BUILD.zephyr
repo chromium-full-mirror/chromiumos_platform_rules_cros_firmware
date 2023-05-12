@@ -11,6 +11,7 @@ filegroup(
 py_library(
     name = "py_deps",
     deps = [
+        "@zephyr_py_deps_colorama//:pkg",
         "@zephyr_py_deps_packaging//:pkg",
         "@zephyr_py_deps_pyelftools//:pkg",
         "@zephyr_py_deps_pykwalify//:pkg",
