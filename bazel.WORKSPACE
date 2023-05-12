@@ -26,9 +26,9 @@ http_archive(
     name = "coreboot_sdk",
     add_prefix = "coreboot_sdk_root",
     build_file = "//platform/rules_cros_firmware/cros_firmware:BUILD.coreboot_sdk",
-    sha256 = "ff716f2d90432af9b3778e164f0a9a6958a91267008960901bf7be96f5e3db0b",
+    sha256 = "f66205d42c86c619f7db1d4d2512fc7235dab9c7ed82e8d0c22dffbd9d8cc50e",
     urls = [
-        "https://storage.googleapis.com/chromeos-localmirror/fwsdk/experimental/distfiles/coreboot-sdk-2022-12-07.tar.zst",
+        "https://storage.googleapis.com/chromeos-localmirror/fwsdk/experimental/distfiles/coreboot-sdk-2023-05-12.tar.zst",
     ],
 )
 
