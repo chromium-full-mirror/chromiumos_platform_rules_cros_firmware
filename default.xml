@@ -17,6 +17,11 @@
           review="https://chromium-review.googlesource.com">
     <annotation name="public" value="true" />
   </remote>
+  <remote name="cros-internal"
+          fetch="https://chrome-internal.googlesource.com"
+          review="https://chrome-internal-review.googlesource.com">
+    <annotation name="public" value="false" />
+  </remote>
 
   <!-- Repohooks -->
   <project path="src/repohooks"
@@ -42,7 +47,14 @@
            name="chromiumos/platform/rules_cros_firmware">
     <!-- Symlink the WORKSPACE file so bazel finds it. -->
     <linkfile src="bazel.WORKSPACE" dest="src/WORKSPACE" />
+    <linkfile src="bazelrc" dest="src/.bazelrc" />
   </project>
+  <project path="src/platform/ti50/common"
+           remote="cros-internal"
+           name="ti50/common/ti50" />
+  <project path="src/platform/ti50/manifest"
+           remote="cros-internal"
+           name="ti50/manifest" />
   <project path="src/platform/vboot_reference"
            name="chromiumos/platform/vboot_reference" />
   <project path="src/third_party/coreboot"
@@ -84,4 +96,32 @@
            name="chromiumos/third_party/zephyr" />
   <project path="src/third_party/zephyr/nanopb"
            name="chromiumos/third_party/zephyr/nanopb" />
+
+  <!-- ti50 dependencies -->
+  <project path="src/third_party/cargo/registry"
+           remote="cros-internal"
+           name="ti50/third_party/cargo/registry"
+           revision="refs/heads/chromeos" />
+  <project path="src/third_party/lowrisc/opentitan"
+           remote="cros-internal"
+           name="ti50/third_party/lowrisc/opentitan"
+           revision="refs/heads/chromeos-v1" />
+  <project path="src/third_party/ms-tpm-20-ref"
+           remote="cros-internal"
+           name="ti50/third_party/microsoft/ms-tpm-20-ref"
+           revision="refs/heads/chromeos" />
+  <project path="src/third_party/tock/libtock-c"
+           remote="cros-internal"
+           name="ti50/third_party/tock/libtock-c"
+           revision="refs/heads/chromeos" />
+  <project path="src/third_party/tock/libtock-rs"
+           remote="cros-internal"
+           name="ti50/third_party/tock/libtock-rs"
+           revision="refs/heads/chromeos-v2" />
+  <project path="src/third_party/tock/tock"
+           remote="cros-internal"
+           name="ti50/third_party/tock/tock"
+           revision="refs/heads/chromeos-v2.0" />
+  <project path="src/platform/pinweaver"
+           name="chromiumos/platform/pinweaver" />
 </manifest>

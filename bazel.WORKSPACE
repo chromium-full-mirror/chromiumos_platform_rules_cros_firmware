@@ -7,8 +7,6 @@ workspace(name = "cros_firmware")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("//platform/rules_cros_firmware/repositories:depot_tools.bzl", "depot_tools")
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
 http_archive(
     name = "bazel_skylib",
     sha256 = "f24ab666394232f834f74d19e2ff142b0af17466ea0c69a3f4c276ee75f6efce",
@@ -23,7 +21,27 @@ load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 bazel_skylib_workspace()
 
 load("//platform/rules_cros_firmware/cros_firmware:bundles.bzl", "bundles_workspace")
+
 bundles_workspace()
+
+http_archive(
+    name = "rules_rust",
+    sha256 = "25209daff2ba21e818801c7b2dab0274c43808982d6aea9f796d899db6319146",
+    urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.21.1/rules_rust-v0.21.1.tar.gz"],
+)
+
+load("//platform/ti50/common/toolchain:toolchain.bzl", "ti50_deps")
+
+ti50_deps()
+
+load("@rules_rust//crate_universe:defs.bzl", "crates_repository")
+load("@ti50_rust_deps//:defs.bzl", ti50_rust_deps = "crate_repositories")
+
+ti50_rust_deps()
+
+load("@ti50_std_rust_deps//:defs.bzl", ti50_std_rust_deps = "crate_repositories")
+
+ti50_std_rust_deps()
 
 http_archive(
     name = "coreboot_sdk",
@@ -90,13 +108,12 @@ python_register_toolchains(
 )
 
 load("@python3_10//:defs.bzl", "interpreter")
-
 load("@rules_python//python:pip.bzl", "pip_parse")
 
 pip_parse(
     name = "zephyr_py_deps",
-    requirements_lock = "//platform/rules_cros_firmware/cros_firmware:zephyr-requirements-lock.txt",
     python_interpreter_target = interpreter,
+    requirements_lock = "//platform/rules_cros_firmware/cros_firmware:zephyr-requirements-lock.txt",
 )
 
 load("@zephyr_py_deps//:requirements.bzl", "install_deps")
@@ -105,8 +122,8 @@ install_deps()
 
 pip_parse(
     name = "hdctools_py_deps",
-    requirements_lock = "//platform/rules_cros_firmware/cros_firmware:hdctools-requirements-lock.txt",
     python_interpreter_target = interpreter,
+    requirements_lock = "//platform/rules_cros_firmware/cros_firmware:hdctools-requirements-lock.txt",
 )
 
 load("@hdctools_py_deps//:requirements.bzl", "install_deps")
