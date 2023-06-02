@@ -13,7 +13,7 @@ ec_image_generator(
 )
 
 ec_image_generator(
-    "rex-sans-sensors",
+    "rex-ish-ec",
     extra_modules = ["cmsis"],
 )
 
