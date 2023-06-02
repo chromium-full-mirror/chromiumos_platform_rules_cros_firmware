@@ -4,219 +4,219 @@
 
 load(
     "@cros_firmware//platform/rules_cros_firmware/cros_firmware:ec.bzl",
-    "ec_image_generator",
+    "ec_binary",
 )
 
-ec_image_generator(
-    "rex",
+ec_binary(
+    name = "rex",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "rex-ish-ec",
+ec_binary(
+    name = "rex-ish-ec",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "screebo",
+ec_binary(
+    name = "screebo",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "evoker",
+ec_binary(
+    name = "evoker",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "herobrine",
+ec_binary(
+    name = "herobrine",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "hoglin",
+ec_binary(
+    name = "hoglin",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "villager",
+ec_binary(
+    name = "villager",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "zoglin",
+ec_binary(
+    name = "zoglin",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "zombie",
+ec_binary(
+    name = "zombie",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "brya",
+ec_binary(
+    name = "brya",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "myst",
+ec_binary(
+    name = "myst",
     extra_modules = ["cmsis"],
 )
 
 # TODO(b/http://b/282211783): Setup host toolchain
-# ec_image_generator(
-#     "minimal-posix",
+# ec_binary(
+#     name="minimal-posix",
 # )
 
-ec_image_generator(
-    "minimal-npcx9",
+ec_binary(
+    name = "minimal-npcx9",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "minimal-it8xxx2",
+ec_binary(
+    name = "minimal-it8xxx2",
 )
 
-ec_image_generator(
-    "lazor",
+ec_binary(
+    name = "lazor",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "it8xxx2_evb",
+ec_binary(
+    name = "it8xxx2_evb",
 )
 
-ec_image_generator(
-    "skyrim",
+ec_binary(
+    name = "skyrim",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "winterhold",
+ec_binary(
+    name = "winterhold",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "frostflow",
+ec_binary(
+    name = "frostflow",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "crystaldrift",
+ec_binary(
+    name = "crystaldrift",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "markarth",
+ec_binary(
+    name = "markarth",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "geralt",
+ec_binary(
+    name = "geralt",
 )
 
-ec_image_generator(
-    "krabby",
+ec_binary(
+    name = "krabby",
 )
 
-ec_image_generator(
-    "kingler",
+ec_binary(
+    name = "kingler",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "steelix",
+ec_binary(
+    name = "steelix",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "tentacruel",
+ec_binary(
+    name = "tentacruel",
 )
 
-ec_image_generator(
-    "magikarp",
+ec_binary(
+    name = "magikarp",
 )
 
-ec_image_generator(
-    "voltorb",
+ec_binary(
+    name = "voltorb",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "npcx9",
+ec_binary(
+    name = "npcx9",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "npcx7",
+ec_binary(
+    name = "npcx7",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "adlrvp_mchp",
+ec_binary(
+    name = "adlrvp_mchp",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "adlrvp_npcx",
+ec_binary(
+    name = "adlrvp_npcx",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "mtlrvpp_mchp",
+ec_binary(
+    name = "mtlrvpp_mchp",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "mtlrvpp_npcx",
+ec_binary(
+    name = "mtlrvpp_npcx",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "nivviks",
+ec_binary(
+    name = "nivviks",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "nereid",
+ec_binary(
+    name = "nereid",
 )
 
-ec_image_generator(
-    "nereid_cx",
+ec_binary(
+    name = "nereid_cx",
 )
 
-ec_image_generator(
-    "craask",
+ec_binary(
+    name = "craask",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "pujjo",
+ec_binary(
+    name = "pujjo",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "xivu",
+ec_binary(
+    name = "xivu",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "xivur",
+ec_binary(
+    name = "xivur",
     extra_modules = ["cmsis"],
 )
 
-ec_image_generator(
-    "joxer",
+ec_binary(
+    name = "joxer",
 )
 
-ec_image_generator(
-    "yaviks",
+ec_binary(
+    name = "yaviks",
 )
 
-ec_image_generator(
-    "yavilla",
+ec_binary(
+    name = "yavilla",
 )
 
-ec_image_generator(
-    "uldren",
+ec_binary(
+    name = "uldren",
     extra_modules = ["cmsis"],
 )

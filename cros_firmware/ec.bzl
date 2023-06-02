@@ -1,47 +1,74 @@
 # Copyright 2023 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-# Copyright 2023 The ChromiumOS Authors
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
 
-load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
+def _impl(ctx):
+    envs = {
+        "TOOL_PATH_binman": ctx.file._binman_path.path,
+        "COREBOOT_SDK_ROOT": ctx.file._coreboot_root.path,
+    }
 
-def ec_image_generator(firmware_target, extra_modules = []):
-    # TODO binman inclusion should be in BUILD.ec
-    srcs = [
-        "@u_boot//:binman_path",
-        "@zephyr//:src",
-        "@ec//:src",
-        "@coreboot_sdk//:coreboot_sdk_root",
+    build_dir = ctx.actions.declare_file("ec_{}".format(ctx.attr.name))
+
+    args = [
+        "--modules-dir",
+        "external",
+        "--zephyr-base",
+        "external/zephyr",
+        "build",
+        "{}".format(ctx.attr.name),
+        "-B",
+        "{}".format(build_dir.path),
+        "-t",
+        "coreboot-sdk",
+        "--extra-cflags='-DCMAKE_BUILD_TYPE=Debug'",
+        # Use bazel's cache instead of CMake
+        "-DUSE_CCACHE=0",
     ]
 
+    deps = ctx.files._zmake + ctx.files._ec + ctx.files._binman_path + ctx.files._coreboot_root
+
+    extra_modules = ctx.attr.extra_modules
+
     if "cmsis" in extra_modules:
-        srcs += ["@cmsis//:src"]
+        deps += ctx.files._cmsis
 
-    build_dir = firmware_target + "_ec_build"
+    zmake_bin_tool_inputs, zmake_bin_tool_input_mfs = ctx.resolve_tools(tools = [ctx.attr._zmake_bin])
 
-    run_binary(
-        name = firmware_target + "_ec",
-        srcs = srcs,
-        outs = [build_dir],
-        args = [
-            "--modules-dir",
-            "external",
-            "--zephyr-base",
-            "external/zephyr",
-            "build",
-            firmware_target,
-            "-B",
-            "$(location {})".format(build_dir),
-            "-t",
-            "coreboot-sdk",
-            "--extra-cflags='-DCMAKE_BUILD_TYPE=Debug'",
-            "-DUSE_CCACHE=0",
-        ],
-        env = {
-            "TOOL_PATH_binman": "$(location @u_boot//:binman_path)",
-            "COREBOOT_SDK_ROOT": "$(location @coreboot_sdk//:coreboot_sdk_root)",
-        },
-        tool = "@ec//:zmake",
+    ctx.actions.run(
+        outputs = [build_dir],
+        inputs = deps,
+        tools = zmake_bin_tool_inputs,
+        executable = ctx.executable._zmake_bin,
+        arguments = args,
+        mnemonic = "RunBinary",
+        use_default_shell_env = False,
+        env = envs,
+        input_manifests = zmake_bin_tool_input_mfs,
     )
+
+    return DefaultInfo(
+        files = depset([build_dir]),
+        runfiles = ctx.runfiles(files = [build_dir]),
+    )
+
+ec_binary = rule(
+    implementation = _impl,
+    doc = "Build an EC binary for a given firmware target <name>",
+    attrs = {
+        "extra_modules": attr.string_list(
+            doc = "Extra modules, e.g. cmsis to be included for this ec binary",
+        ),
+        "_binman_path": attr.label(default = "@u_boot//:binman_path", allow_single_file = True),
+        "_ec": attr.label(default = "@ec//:src", allow_files = True),
+        "_cmsis": attr.label(default = "@cmsis//:src", allow_files = True),
+        "_coreboot_root": attr.label(default = "@coreboot_sdk//:coreboot_sdk_root", allow_single_file = True),
+        "_zmake": attr.label(default = "@zephyr//:src", allow_files = True),
+        "_zmake_bin": attr.label(
+            executable = True,
+            allow_files = True,
+            cfg = "exec",
+            default = "@ec//:zmake",
+        ),
+    },
+)
