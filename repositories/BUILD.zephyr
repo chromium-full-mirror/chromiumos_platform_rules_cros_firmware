@@ -18,6 +18,11 @@ py_library(
         "@zephyr_py_deps_pyyaml//:pkg",
         "@zephyr_py_deps_ruamel_yaml//:pkg",
         "@zephyr_py_deps_ruamel_yaml_clib//:pkg",
+        # Twister
+        "@zephyr_py_deps_psutil//:pkg",
+        "@zephyr_py_deps_anytree//:pkg",
+        "@zephyr_py_deps_ply//:pkg",
+        "@zephyr_py_deps_natsort//:pkg",
     ],
     visibility = ["//visibility:public"],
 )

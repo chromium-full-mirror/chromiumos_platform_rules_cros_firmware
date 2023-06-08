@@ -36,3 +36,21 @@ py_binary(
     visibility = ["//visibility:public"],
     deps = ["@zephyr//:py_deps", "@u_boot//:binman"],
 )
+
+filegroup(
+    name = "twister_src",
+    srcs = glob(["util/twister_launcher.py"])
+)
+
+py_binary(
+    name = "twister_binary",
+    srcs = ["@ec//:twister_src"],
+    data = [
+        "@ec//:src",
+    ],
+    main = "//:util/twister_launcher.py",
+    visibility = ["//visibility:public"],
+    deps = ["@zephyr//:py_deps"],
+)
+
+exports_files(["zephyr"])
