@@ -80,11 +80,14 @@ python_register_toolchains(
     python_version = "3.10.9",
 )
 
+load("@python3_10//:defs.bzl", "interpreter")
+
 load("@rules_python//python:pip.bzl", "pip_parse")
 
 pip_parse(
     name = "zephyr_py_deps",
     requirements_lock = "//platform/rules_cros_firmware/cros_firmware:zephyr-requirements-lock.txt",
+    python_interpreter_target = interpreter,
 )
 
 load("@zephyr_py_deps//:requirements.bzl", "install_deps")
