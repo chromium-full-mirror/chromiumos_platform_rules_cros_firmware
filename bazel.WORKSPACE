@@ -59,6 +59,12 @@ new_local_repository(
 )
 
 new_local_repository(
+    name = "hdctools",
+    build_file = "//platform/rules_cros_firmware/repositories:BUILD.hdctools",
+    path = "third_party/hdctools",
+)
+
+new_local_repository(
     name = "cmsis",
     build_file = "//platform/rules_cros_firmware/repositories:BUILD.cmsis",
     path = "third_party/zephyr/cmsis",
@@ -94,5 +100,15 @@ pip_parse(
 )
 
 load("@zephyr_py_deps//:requirements.bzl", "install_deps")
+
+install_deps()
+
+pip_parse(
+    name = "hdctools_py_deps",
+    requirements_lock = "//platform/rules_cros_firmware/cros_firmware:hdctools-requirements-lock.txt",
+    python_interpreter_target = interpreter,
+)
+
+load("@hdctools_py_deps//:requirements.bzl", "install_deps")
 
 install_deps()
