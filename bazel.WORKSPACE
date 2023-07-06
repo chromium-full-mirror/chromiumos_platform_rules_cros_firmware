@@ -22,6 +22,9 @@ load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 
 bazel_skylib_workspace()
 
+load("//platform/rules_cros_firmware/cros_firmware:bundles.bzl", "bundles_workspace")
+bundles_workspace()
+
 http_archive(
     name = "coreboot_sdk",
     add_prefix = "coreboot_sdk_root",
