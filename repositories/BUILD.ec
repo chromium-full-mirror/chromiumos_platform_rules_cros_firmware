@@ -21,6 +21,7 @@ filegroup(
         "fuzz/**",
         "test/**",
         "third_party/**",
+        "util/check_zephyr_end_of_ram.py",
         "*",
     ]),
     visibility = ["//visibility:public"],
