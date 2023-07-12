@@ -23,7 +23,7 @@ filegroup(
         "third_party/**",
         "util/check_zephyr_end_of_ram.py",
         "*",
-    ]),
+    ], exclude = ["**/twister-out/**"]),
     visibility = ["//visibility:public"],
 )
 
