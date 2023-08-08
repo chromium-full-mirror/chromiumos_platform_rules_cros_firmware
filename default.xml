@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- This is a *temporary* repo manifest for early fwsdk
      experimentation.  This location is not its final home.
-     
+
      We need to relocate it to either the main chromiumos manifest
      (maybe by using "-m fwsdk.xml"?), or a separate manifest
      repository at a later point once we figure out the infrastructure
@@ -30,6 +30,8 @@
     <copyfile src="AUTHORS" dest="AUTHORS" />
     <copyfile src="LICENSE" dest="LICENSE" />
   </project>
+  <project path="src/bazel"
+           name="chromiumos/bazel" />
   <project path="src/platform/depthcharge"
            name="chromiumos/platform/depthcharge" />
   <project path="src/platform/ec"
