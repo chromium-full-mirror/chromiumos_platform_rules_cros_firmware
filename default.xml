@@ -44,11 +44,7 @@
   <project path="src/platform/firmware"
            name="chromiumos/platform/firmware" />
   <project path="src/platform/rules_cros_firmware"
-           name="chromiumos/platform/rules_cros_firmware">
-    <!-- Symlink the WORKSPACE file so bazel finds it. -->
-    <linkfile src="bazel.WORKSPACE" dest="src/WORKSPACE" />
-    <linkfile src="bazelrc" dest="src/.bazelrc" />
-  </project>
+           name="chromiumos/platform/rules_cros_firmware" />
   <project path="src/platform/ti50/common"
            remote="cros-internal"
            name="ti50/common/ti50" />
@@ -98,6 +94,8 @@
            name="chromiumos/third_party/zephyr/nanopb" />
 
   <!-- ti50 dependencies -->
+  <project path="src/platform/pinweaver"
+           name="chromiumos/platform/pinweaver" />
   <project path="src/third_party/cargo/registry"
            remote="cros-internal"
            name="ti50/third_party/cargo/registry"
@@ -122,6 +120,4 @@
            remote="cros-internal"
            name="ti50/third_party/tock/tock"
            revision="refs/heads/chromeos-v2.0" />
-  <project path="src/platform/pinweaver"
-           name="chromiumos/platform/pinweaver" />
 </manifest>
