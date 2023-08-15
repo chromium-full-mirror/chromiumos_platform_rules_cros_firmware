@@ -4,7 +4,7 @@
 
 load("@rules_python//python:repositories.bzl", "python_register_toolchains")
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
-load("//platform/ti50/common/toolchain:toolchain.bzl", "ti50_deps")
+#load("//platform/ti50/common/toolchain:toolchain.bzl", "ti50_deps")
 
 def fwsdk_workspace_phase2():
     python_register_toolchains(
@@ -13,4 +13,6 @@ def fwsdk_workspace_phase2():
         python_version = "3.10.9",
     )
     bazel_skylib_workspace()
-    ti50_deps()
+
+    # TODO(b/296101573)
+    #ti50_deps()
