@@ -81,7 +81,7 @@
            name="chromiumos/third_party/hdctools" />
   <project path="src/third_party/u-boot/files"
            name="chromiumos/third_party/u-boot"
-           revision="refs/heads/chromeos-v2022.01" />
+           revision="refs/heads/chromeos-v2023.04" />
   <project path="src/third_party/zephyr/cmsis"
            name="chromiumos/third_party/zephyr/cmsis"
            revision="refs/heads/chromeos-main" />
