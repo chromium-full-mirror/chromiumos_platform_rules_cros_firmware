@@ -7,6 +7,7 @@ load("@rules_python//python:pip.bzl", "pip_parse")
 load("@rules_rust//crate_universe:defs.bzl", "crates_repository")
 load("@ti50_rust_deps//:defs.bzl", ti50_rust_deps = "crate_repositories")
 load("@ti50_std_rust_deps//:defs.bzl", ti50_std_rust_deps = "crate_repositories")
+load("@rules_rust//bindgen:transitive_repositories.bzl", "rust_bindgen_transitive_dependencies")
 
 def fwsdk_workspace_phase3():
     pip_parse(
@@ -21,3 +22,4 @@ def fwsdk_workspace_phase3():
     )
     ti50_rust_deps()
     ti50_std_rust_deps()
+    rust_bindgen_transitive_dependencies()
