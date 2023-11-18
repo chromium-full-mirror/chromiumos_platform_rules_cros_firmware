@@ -54,14 +54,11 @@
   <project path="src/platform/vboot_reference"
            name="chromiumos/platform/vboot_reference" />
   <project path="src/third_party/coreboot"
-           name="chromiumos/third_party/coreboot"
-           revision="refs/heads/chromeos-2016.05" />
+           name="chromiumos/third_party/coreboot" />
   <project path="src/third_party/coreboot/3rdparty/amd_blobs"
-           name="chromiumos/third_party/coreboot/amd_blobs"
-           revision="refs/heads/chromeos" />
+           name="chromiumos/third_party/coreboot/amd_blobs" />
   <project path="src/third_party/coreboot/3rdparty/blobs"
-           name="chromiumos/third_party/coreboot/blobs"
-           revision="refs/heads/master" />
+           name="chromiumos/third_party/coreboot/blobs" />
   <project path="src/third_party/coreboot/3rdparty/intel-microcode"
            name="chromiumos/third_party/coreboot/intel-microcode"
            revision="refs/heads/master" />
