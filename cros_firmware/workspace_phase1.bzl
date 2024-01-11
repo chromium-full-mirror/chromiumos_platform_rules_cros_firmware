@@ -3,8 +3,8 @@
 # found in the LICENSE file.
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("//platform/rules_cros_firmware/repositories:depot_tools.bzl", "depot_tools")
 load("//platform/rules_cros_firmware/cros_firmware:bundles.bzl", "bundles_workspace")
+load("//platform/rules_cros_firmware/repositories:depot_tools.bzl", "depot_tools")
 
 def fwsdk_workspace_phase1():
     http_archive(
@@ -72,10 +72,4 @@ def fwsdk_workspace_phase1():
         urls = [
             "https://github.com/bazelbuild/rules_python/archive/refs/tags/{}.tar.gz".format(rules_python_version),
         ],
-    )
-
-    http_archive(
-        name = "rules_rust",
-        sha256 = "db89135f4d1eaa047b9f5518ba4037284b43fc87386d08c1d1fe91708e3730ae",
-        urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.27.0/rules_rust-v0.27.0.tar.gz"],
     )
