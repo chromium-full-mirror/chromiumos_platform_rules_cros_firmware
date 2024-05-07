@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+load("//platform/cr50-utils:deps.bzl", cr50_deps = "deps")
 load("//platform/ti50/common/toolchain:toolchain.bzl", "ti50_deps")
 
 def fwsdk_workspace_phase1():
@@ -36,3 +37,4 @@ def fwsdk_workspace_phase1():
     )
 
     ti50_deps()
+    cr50_deps()
