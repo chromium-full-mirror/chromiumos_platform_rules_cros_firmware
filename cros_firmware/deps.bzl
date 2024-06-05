@@ -4,6 +4,8 @@
 
 load("@bazel_tools//tools/build_defs/repo:git.bzl", _git_repository = "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", _http_archive = "http_archive")
+load("//bazel/repo_defs:new_local_repository.bzl", _new_local_repository = "new_local_repository")
+load("//platform/cr50-utils:deps.bzl", cr50_deps = "deps")
 load("//platform/rules_cros_firmware/repositories:depot_tools.bzl", _depot_tools = "depot_tools")
 
 def _fwsdk_deps_impl(module_ctx):
@@ -21,6 +23,7 @@ def _fwsdk_deps_impl(module_ctx):
     http_archive = repo_rule_wrapper(_http_archive)
     depot_tools = repo_rule_wrapper(_depot_tools)
     git_repository = repo_rule_wrapper(_git_repository)
+    new_local_repository = repo_rule_wrapper(_new_local_repository)
 
     http_archive(
         name = "ec_devutils",
@@ -49,6 +52,36 @@ def _fwsdk_deps_impl(module_ctx):
         urls = [
             "https://storage.googleapis.com/chromeos-localmirror/fwsdk/experimental/distfiles/coreboot-sdk-2023-05-12.tar.zst",
         ],
+    )
+
+    new_local_repository(
+        name = "ec",
+        build_file = "//platform/rules_cros_firmware/repositories:BUILD.ec",
+        path = "platform/ec",
+    )
+
+    new_local_repository(
+        name = "zephyr",
+        build_file = "//platform/rules_cros_firmware/repositories:BUILD.zephyr",
+        path = "third_party/zephyr/main",
+    )
+
+    new_local_repository(
+        name = "u_boot",
+        build_file = "//platform/rules_cros_firmware/repositories:BUILD.u-boot",
+        path = "third_party/u-boot",
+    )
+
+    new_local_repository(
+        name = "hdctools",
+        build_file = "//platform/rules_cros_firmware/repositories:BUILD.hdctools",
+        path = "third_party/hdctools",
+    )
+
+    new_local_repository(
+        name = "cmsis",
+        build_file = "//platform/rules_cros_firmware/repositories:BUILD.cmsis",
+        path = "third_party/zephyr/cmsis",
     )
 
     # To create an SDK , copy /opt/ti50-sdk/* to a new directory.
@@ -93,6 +126,8 @@ def _fwsdk_deps_impl(module_ctx):
         name = "depot_tools",
         build_file = "//platform/rules_cros_firmware/repositories:BUILD.depot_tools",
     )
+
+    cr50_deps(new_local_repository = new_local_repository)
 
     return module_ctx.extension_metadata(
         root_module_direct_deps = generated_repos,
