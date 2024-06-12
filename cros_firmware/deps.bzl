@@ -106,10 +106,9 @@ def _fwsdk_deps_impl(module_ctx):
     # Update url and sha256 below.
     http_archive(
         name = "ti50-sdk",
-        sha256 = "8099a9d1c4eb36ba13ee8d9592d359101e62d21174149361398113cc1818e690",
+        integrity = "sha256-XgZxxD6YdzFqibFDZtGfPLl6LI7+pc2v98Qoq0pK+ZQ=",
         build_file = "//platform/ti50/common/toolchain:toolchain.BUILD",
-        # TODO(b/285214418): Move out of experimental.
-        url = "https://storage.googleapis.com/chromeos-localmirror/fwsdk/experimental/distfiles/ti50-sdk_2023_08_31.tar.zst",
+        url = "https://storage.googleapis.com/chromiumos-sdk/toolchains/ti50-sdk/0.0.1-r2/63619045d5e5d32e4eb9160110f2f97bf9a067b7.tar.zst",
     )
     http_archive(
         name = "cros-sdk",
