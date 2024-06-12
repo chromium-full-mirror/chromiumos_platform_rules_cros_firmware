@@ -4,6 +4,7 @@
 
 load("@bazel_tools//tools/build_defs/repo:git.bzl", _git_repository = "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", _http_archive = "http_archive")
+load("//bazel/repo_defs:cipd.bzl", _cipd_zip_repo = "cipd_zip_repo")
 load("//bazel/repo_defs:new_local_repository.bzl", _new_local_repository = "new_local_repository")
 load("//platform/cr50-utils:deps.bzl", cr50_deps = "deps")
 load("//platform/rules_cros_firmware/repositories:depot_tools.bzl", _depot_tools = "depot_tools")
@@ -26,6 +27,7 @@ def _fwsdk_deps_impl(module_ctx):
     git_repository = repo_rule_wrapper(_git_repository)
     new_local_repository = repo_rule_wrapper(_new_local_repository)
     nonhermetic_repo = repo_rule_wrapper(_nonhermetic_repo)
+    cipd_zip_repo = repo_rule_wrapper(_cipd_zip_repo)
 
     http_archive(
         name = "ec_devutils",
@@ -121,6 +123,11 @@ def _fwsdk_deps_impl(module_ctx):
         remote = "https://github.com/rust-lang/compiler-builtins",
         tag = "0.1.84",
         build_file = "//platform/ti50/common/toolchain:compiler-builtins.BUILD",
+    )
+    cipd_zip_repo(
+        name = "codesigner",
+        build_file = "//platform/ti50/common/toolchain:codesigner.BUILD",
+        url = "cipd://chromeos_internal/infra/tools/cr50-utils:buTaioQouf3i3Hoix1b039uvng4RpflbSRj-7YMkAXoC",
     )
 
     depot_tools(
