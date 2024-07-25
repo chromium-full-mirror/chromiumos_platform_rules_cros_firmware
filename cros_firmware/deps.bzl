@@ -134,30 +134,19 @@ def _fwsdk_deps_impl(module_ctx):
         path = "third_party/zephyr/cmsis",
     )
 
-    # To create an SDK , copy /opt/ti50-sdk/* to a new directory.
-    # From the chroot, copy the following in <sdk>/lib
-    # libc++abi.so.1
-    # libc++.so.1
-    # libgcc_s.so.1
-    # libm.so.6
-    # libtinfo.so.6
-    # libunwind.so.1
-    # libz.so.1
-    # libzstd.so.1
-    # Copy libc.so.6 from the host to <sdk>/lib
-    # Package with:
-    # tar -I zstd -cvf ti50-sdk_yyyy_mm_dd.tar.zst ./*
-    # Upload to fwsdk experimental directory:
-    # gsutil cp ti50-sdk_yyyy_mm_dd.tar.zst gs://chromeos-localmirror/fwsdk/experimental/distfiles/
-    # Set permissions to public:
-    # gsutil setacl public-read gs://chromeos-localmirror/fwsdk/experimental/distfiles/ti50-sdk_yyyy_mm_dd.tar.zst
-    # Update url and sha256 below.
+    # ti50-sdk is built by the subtools builder:
+    # https://ci.chromium.org/ui/p/chromeos/builders/infra/build-chromiumos-sdk-subtools-ti50-sdk
+    # To uprev, visit the above link and copy the URL to the latest sucessful
+    # tarball, and update below.  Additionally, this should be kept in sync
+    # with the ebuild:
+    # src/private-overlays/chromeos-overlay/chromeos-base/chromeos-ti50-dev
     http_archive(
         name = "ti50-sdk",
         integrity = "sha256-XgZxxD6YdzFqibFDZtGfPLl6LI7+pc2v98Qoq0pK+ZQ=",
         build_file = "//platform/ti50/common/toolchain:toolchain.BUILD",
         url = "https://storage.googleapis.com/chromiumos-sdk/toolchains/ti50-sdk/0.0.1-r2/63619045d5e5d32e4eb9160110f2f97bf9a067b7.tar.zst",
     )
+
     http_archive(
         name = "cros-sdk",
         sha256 = "99cbebb56f82a299aad54e6fdc0f1215b5544003ee53ab2e3c701970d659c6d0",
