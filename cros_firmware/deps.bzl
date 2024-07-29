@@ -6,7 +6,6 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", _git_repository = "git_repos
 load("@bazel_tools//tools/build_defs/repo:http.bzl", _http_archive = "http_archive")
 load("//bazel/repo_defs:cipd.bzl", _cipd_zip_repo = "cipd_zip_repo")
 load("//bazel/repo_defs:new_local_repository.bzl", _new_local_repository = "new_local_repository")
-load("//platform/cr50-utils:deps.bzl", cr50_deps = "deps")
 load("//platform/rules_cros_firmware/repositories:depot_tools.bzl", _depot_tools = "depot_tools")
 load("//third_party/lowrisc/opentitan/rules:nonhermetic.bzl", _nonhermetic_repo = "nonhermetic_repo")
 
@@ -169,8 +168,6 @@ def _fwsdk_deps_impl(module_ctx):
         name = "depot_tools",
         build_file = "//platform/rules_cros_firmware/repositories:BUILD.depot_tools",
     )
-
-    cr50_deps(new_local_repository = new_local_repository)
 
     nonhermetic_repo(name = "nonhermetic")
 
