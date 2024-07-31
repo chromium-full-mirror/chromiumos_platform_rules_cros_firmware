@@ -7,7 +7,6 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", _http_archive = "http_archi
 load("//bazel/repo_defs:cipd.bzl", _cipd_zip_repo = "cipd_zip_repo")
 load("//bazel/repo_defs:new_local_repository.bzl", _new_local_repository = "new_local_repository")
 load("//platform/rules_cros_firmware/repositories:depot_tools.bzl", _depot_tools = "depot_tools")
-load("//third_party/lowrisc/opentitan/rules:nonhermetic.bzl", _nonhermetic_repo = "nonhermetic_repo")
 
 def _fwsdk_deps_impl(module_ctx):
     generated_repos = []
@@ -25,7 +24,6 @@ def _fwsdk_deps_impl(module_ctx):
     depot_tools = repo_rule_wrapper(_depot_tools)
     git_repository = repo_rule_wrapper(_git_repository)
     new_local_repository = repo_rule_wrapper(_new_local_repository)
-    nonhermetic_repo = repo_rule_wrapper(_nonhermetic_repo)
     cipd_zip_repo = repo_rule_wrapper(_cipd_zip_repo)
 
     http_archive(
@@ -168,8 +166,6 @@ def _fwsdk_deps_impl(module_ctx):
         name = "depot_tools",
         build_file = "//platform/rules_cros_firmware/repositories:BUILD.depot_tools",
     )
-
-    nonhermetic_repo(name = "nonhermetic")
 
     return module_ctx.extension_metadata(
         root_module_direct_deps = generated_repos,
