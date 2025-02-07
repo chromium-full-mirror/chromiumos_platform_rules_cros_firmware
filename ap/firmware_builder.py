@@ -32,14 +32,15 @@ def build(_opts):
     Reads FW_NAME from the adjacent firmware_target script,
     and builds that firmware.
     """
-    for build_target in _opts.firmware_targets:
+
+    firmware_targets = _opts.firmware_targets.split(",")
+    for build_target in firmware_targets:
         cmd = [
             "cros",
             "ap",
             "build",
             f"--build-target={build_target}",
         ]
-
         subprocess.run(
             cmd,
             check=True,
@@ -122,7 +123,7 @@ def parse_args(args):
 
     parser.add_argument(
         "--firmware-targets",
-        default=multiprocessing.cpu_count(),
+        required=True,
         help="Comma-separated list of firmware targets (~boards).",
     )
 
