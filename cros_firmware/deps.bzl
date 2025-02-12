@@ -80,12 +80,12 @@ def _fwsdk_deps_impl(module_ctx):
     # To uprev, visit the above link and copy the URL to the latest sucessful
     # tarball, and update below.  Additionally, this should be kept in sync
     # with the ebuild:
-    # src/private-overlays/chromeos-overlay/chromeos-base/chromeos-ti50-dev
+    # src/private-overlays/chromeos-overlay/chromeos-base/ti50-emulator
     http_archive(
         name = "ti50-sdk",
-        integrity = "sha256-XgZxxD6YdzFqibFDZtGfPLl6LI7+pc2v98Qoq0pK+ZQ=",
+        sha256 = "77d8dee46fcde7e61787a288434f523d379189383c8dcad68139ef698dafc4fe",
         build_file = "//platform/ti50/common/toolchain:toolchain.BUILD",
-        url = "https://storage.googleapis.com/chromiumos-sdk/toolchains/ti50-sdk/0.0.1-r2/63619045d5e5d32e4eb9160110f2f97bf9a067b7.tar.zst",
+        url = "https://storage.googleapis.com/chromiumos-sdk/toolchains/ti50-sdk/0.0.1-r3/0c192e2e19a6b322188e31e0cdf69db57a0f0df7.tar.zst",
     )
 
     http_archive(
