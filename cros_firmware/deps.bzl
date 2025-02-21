@@ -8,6 +8,17 @@ load("//bazel/repo_defs:cipd.bzl", _cipd_zip_repo = "cipd_zip_repo")
 load("//bazel/repo_defs:new_local_repository.bzl", _new_local_repository = "new_local_repository")
 load("//platform/rules_cros_firmware/repositories:depot_tools.bzl", _depot_tools = "depot_tools")
 
+# b/397441298: a bash script that replaces ti50-sdk's libc with the system's,
+# when in the chroot.
+#
+# Use `cp` instead of `ln` since symlinks don't work well with RBE in similar
+# applications of this logic (see post-commit discussion on
+# crrev.com/c/6254912).
+_patch_ti50_sdk_libc = """
+[[ -e /etc/cros_chroot_version ]] || exit 0
+cd lib && cp -a /lib/{ld-linux-x86-64.so.2,libc.so.6,libm.so.6} .
+"""
+
 def _fwsdk_deps_impl(module_ctx):
     generated_repos = []
 
@@ -86,6 +97,7 @@ def _fwsdk_deps_impl(module_ctx):
         sha256 = "77d8dee46fcde7e61787a288434f523d379189383c8dcad68139ef698dafc4fe",
         build_file = "//platform/ti50/common/toolchain:toolchain.BUILD",
         url = "https://storage.googleapis.com/chromiumos-sdk/toolchains/ti50-sdk/0.0.1-r3/0c192e2e19a6b322188e31e0cdf69db57a0f0df7.tar.zst",
+        patch_cmds = [_patch_ti50_sdk_libc],
     )
 
     http_archive(
