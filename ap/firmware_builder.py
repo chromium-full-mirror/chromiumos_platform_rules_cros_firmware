@@ -79,7 +79,8 @@ def bundle(opts):
     info = firmware_pb2.FirmwareArtifactInfo()  # pylint: disable=no-member
     info.bcs_version_info.version_string = opts.bcs_version
     bundle_dir = get_bundle_dir(opts)
-    for build_target in opts.firmware_targets:
+    firmware_targets = opts.firmware_targets.split(",")
+    for build_target in firmware_targets:
         tarball_dir = os.path.join(bundle_dir, build_target)
         if not os.path.isdir(tarball_dir):
             os.mkdir(tarball_dir)
