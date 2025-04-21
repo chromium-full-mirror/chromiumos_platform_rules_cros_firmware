@@ -155,7 +155,7 @@ def _fwsdk_deps_impl(module_ctx):
     git_repository(
         name = "compiler-builtins",
         remote = "https://github.com/rust-lang/compiler-builtins",
-        tag = "0.1.84",
+        tag = "compiler_builtins-v0.1.84",
         build_file = "//platform/ti50/common/toolchain:compiler-builtins.BUILD",
     )
     cipd_zip_repo(
