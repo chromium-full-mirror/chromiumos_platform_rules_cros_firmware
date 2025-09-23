@@ -41,8 +41,12 @@ def build(_opts):
             "build",
             f"--build-target={build_target}",
         ]
+        cmd_env = os.environ.copy()
+        if _opts.avb_enabled:
+            cmd_env["USE"] = "avb"
         subprocess.run(
             cmd,
+            env=cmd_env,
             check=True,
         )
 
@@ -153,6 +157,14 @@ def parse_args(args):
         default="",
         required=False,
         help="BCS version to include in metadata.",
+    )
+
+    parser.add_argument(
+        "--avb-enabled",
+        dest="avb_enabled",
+        required=False,
+        action="store_true",
+        help='Build with the USE="avb".',
     )
 
     sub_cmds = parser.add_subparsers(required=True)
