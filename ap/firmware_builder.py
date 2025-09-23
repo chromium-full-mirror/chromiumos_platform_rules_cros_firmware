@@ -12,6 +12,8 @@ It gets invoked by chromite/api/controller/firmware.py.
 import argparse
 import multiprocessing
 import os
+import pathlib
+import shlex
 import subprocess
 import sys
 
@@ -25,6 +27,8 @@ from chromite.api.gen_sdk.chromite.api import firmware_pb2
 DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
 DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
 
+ROOT_DIR = pathlib.Path(__file__).parent.parent.parent.parent.parent.resolve()
+
 
 def build(_opts):
     """Builds one AP firmware targets.
@@ -32,6 +36,9 @@ def build(_opts):
     Reads FW_NAME from the adjacent firmware_target script,
     and builds that firmware.
     """
+    env = os.environ.copy()
+    if _opts.avb_enabled:
+        env["USE"] = "avb"
 
     firmware_targets = _opts.firmware_targets.split(",")
     for build_target in firmware_targets:
@@ -41,18 +48,62 @@ def build(_opts):
             "build",
             f"--build-target={build_target}",
         ]
-        cmd_env = os.environ.copy()
-        if _opts.avb_enabled:
-            cmd_env["USE"] = "avb"
+        log_cmd(cmd, env=env)
         subprocess.run(
             cmd,
-            env=cmd_env,
+            env=env,
             check=True,
         )
 
 
+def log_cmd(cmd, env=None, cwd=None):
+    """Log subprocess command."""
+    if cwd:
+        print(f"cd {cwd};", end=" ")
+    if env is not None:
+        print("env", end=" ")
+        [  # pylint:disable=expression-not-assigned
+            print(key + "=" + shlex.quote(str(value)), end=" ")
+            for key, value in env.items()
+        ]
+    print(" ".join(shlex.quote(str(x)) for x in cmd))
+    sys.stdout.flush()
+
+
 def test(_opts):
     """Runs all of the unit tests for AP firmware."""
+    env = os.environ.copy()
+    firmware_targets = _opts.firmware_targets.split(",")
+    for build_target in firmware_targets:
+        cmd = [
+            "cros",
+            "build-packages",
+            "-v",
+            "--board",
+            build_target,
+            "chromeos-base/ec-utils",
+        ]
+        log_cmd(cmd, env=env)
+        subprocess.run(
+            cmd,
+            env=env,
+            check=True,
+        )
+        cmd = [
+            "cros_run_unit_tests",
+            "--emerge-verbose",
+            "--board",
+            build_target,
+            "--packages",
+            "sys-boot/chromeos-bootimage "
+            "sys-boot/coreboot "
+            "sys-boot/depthcharge "
+            "chromeos-base/vboot_reference",
+            "--filter-only-cros-workon",
+            "--no-testable-packages-ok",
+        ]
+        log_cmd(cmd, env=env)
+        subprocess.run(cmd, check=True, env=env, stdin=subprocess.DEVNULL)
 
 
 def get_bundle_dir(opts):
