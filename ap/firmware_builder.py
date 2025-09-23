@@ -12,6 +12,8 @@ It gets invoked by chromite/api/controller/firmware.py.
 import argparse
 import multiprocessing
 import os
+import pathlib
+import shlex
 import subprocess
 import sys
 
@@ -25,6 +27,8 @@ from chromite.api.gen_sdk.chromite.api import firmware_pb2
 DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
 DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
 
+ROOT_DIR = pathlib.Path(__file__).parent.parent.parent.parent.parent.resolve()
+
 
 def build(_opts):
     """Builds one AP firmware targets.
@@ -32,8 +36,26 @@ def build(_opts):
     Reads FW_NAME from the adjacent firmware_target script,
     and builds that firmware.
     """
+    env = os.environ.copy()
+    if _opts.avb_enabled:
+        env["USE"] = "avb"
 
     firmware_targets = _opts.firmware_targets.split(",")
+
+    for build_target in firmware_targets:
+        cmd = [
+            "setup_board",
+            "-b",
+            build_target,
+            "--force",
+        ]
+        log_cmd(cmd, env=env)
+        subprocess.run(
+            cmd,
+            env=env,
+            check=True,
+        )
+
     for build_target in firmware_targets:
         cmd = [
             "cros",
@@ -41,10 +63,26 @@ def build(_opts):
             "build",
             f"--build-target={build_target}",
         ]
+        log_cmd(cmd, env=env)
         subprocess.run(
             cmd,
+            env=env,
             check=True,
         )
+
+
+def log_cmd(cmd, env=None, cwd=None):
+    """Log subprocess command."""
+    if cwd:
+        print(f"cd {cwd};", end=" ")
+    if env is not None:
+        print("env", end=" ")
+        [  # pylint:disable=expression-not-assigned
+            print(key + "=" + shlex.quote(str(value)), end=" ")
+            for key, value in env.items()
+        ]
+    print(" ".join(shlex.quote(str(x)) for x in cmd))
+    sys.stdout.flush()
 
 
 def test(_opts):
@@ -153,6 +191,14 @@ def parse_args(args):
         default="",
         required=False,
         help="BCS version to include in metadata.",
+    )
+
+    parser.add_argument(
+        "--avb-enabled",
+        dest="avb_enabled",
+        required=False,
+        action="store_true",
+        help='Build with the USE="avb".',
     )
 
     sub_cmds = parser.add_subparsers(required=True)
