@@ -41,6 +41,7 @@ def build(_opts):
         env["USE"] = "avb"
 
     firmware_targets = _opts.firmware_targets.split(",")
+    subprocesses = []
     for build_target in firmware_targets:
         cmd = [
             "cros",
@@ -49,11 +50,16 @@ def build(_opts):
             f"--build-target={build_target}",
         ]
         log_cmd(cmd, env=env)
-        subprocess.run(
-            cmd,
-            env=env,
-            check=True,
+        subprocesses.append(
+            subprocess.Popen(  # pylint: disable=consider-using-with
+                cmd, env=env, stdin=subprocess.DEVNULL
+            )
         )
+
+    for proc in subprocesses:
+        proc.wait()
+        if proc.returncode != 0:
+            raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
 
 def log_cmd(cmd, env=None, cwd=None):
@@ -74,6 +80,7 @@ def test(_opts):
     """Runs all of the unit tests for AP firmware."""
     env = os.environ.copy()
     firmware_targets = _opts.firmware_targets.split(",")
+    subprocesses = []
     for build_target in firmware_targets:
         cmd = [
             "cros",
@@ -84,11 +91,19 @@ def test(_opts):
             "chromeos-base/ec-utils",
         ]
         log_cmd(cmd, env=env)
-        subprocess.run(
-            cmd,
-            env=env,
-            check=True,
+        subprocesses.append(
+            subprocess.Popen(  # pylint: disable=consider-using-with
+                cmd, env=env, stdin=subprocess.DEVNULL
+            )
         )
+
+    for proc in subprocesses:
+        proc.wait()
+        if proc.returncode != 0:
+            raise subprocess.CalledProcessError(proc.returncode, proc.args)
+
+    subprocesses = []
+    for build_target in firmware_targets:
         cmd = [
             "cros_run_unit_tests",
             "--emerge-verbose",
@@ -103,7 +118,15 @@ def test(_opts):
             "--no-testable-packages-ok",
         ]
         log_cmd(cmd, env=env)
-        subprocess.run(cmd, check=True, env=env, stdin=subprocess.DEVNULL)
+        subprocesses.append(
+            subprocess.Popen(  # pylint: disable=consider-using-with
+                cmd, env=env, stdin=subprocess.DEVNULL
+            )
+        )
+    for proc in subprocesses:
+        proc.wait()
+        if proc.returncode != 0:
+            raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
 
 def get_bundle_dir(opts):
