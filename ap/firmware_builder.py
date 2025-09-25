@@ -100,6 +100,21 @@ def build(_opts):
         env["USE"] = "avb"
 
     firmware_targets = _opts.firmware_targets.split(",")
+
+    for build_target in firmware_targets:
+        cmd = [
+            "setup_board",
+            "-b",
+            build_target,
+            "--force",
+        ]
+        log_cmd(cmd, env=env)
+        subprocess.run(
+            cmd,
+            env=env,
+            check=True,
+        )
+
     subprocesses = []
     for build_target in firmware_targets:
         cmd = [
