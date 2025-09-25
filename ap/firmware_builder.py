@@ -16,7 +16,6 @@ import pathlib
 import shlex
 import subprocess
 import sys
-import time
 
 # pylint: disable=import-error
 from google.protobuf import json_format
@@ -29,64 +28,6 @@ DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
 DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
 
 ROOT_DIR = pathlib.Path(__file__).parent.parent.parent.parent.parent.resolve()
-
-
-def wait_for_processes_early_failure(subprocesses):
-    """Waits for all subprocesses to complete.
-
-    Raises an exception immediately if any process exits with a non-zero status.
-    Attempts to terminate other running processes upon detecting a failure.
-
-    Args:
-        subprocesses: A list of subprocess.Popen objects.
-
-    Raises:
-        subprocess.CalledProcessError: If any process returns a non-zero exit
-            code.
-    """
-    running_procs = list(subprocesses)
-
-    while running_procs:
-        next_running_procs = []
-        failed_proc = None
-        returncode = None
-
-        for proc in running_procs:
-            retcode = proc.poll()
-            if retcode is None:  # Process is still running
-                next_running_procs.append(proc)
-            else:  # Process has terminated
-                if retcode != 0:
-                    failed_proc = proc
-                    returncode = retcode
-                    # Don't break here yet, finish polling to update
-                    # next_running_procs so we know which ones to terminate.
-
-        if failed_proc:
-            # A process failed. Terminate any other processes that are still
-            # running.
-            while len(next_running_procs) > 0:
-                terminated_procs = []
-                for proc in next_running_procs:
-                    try:
-                        proc.terminate()
-                        proc.wait(timeout=1)
-                        terminated_procs.append(proc)
-                    except ProcessLookupError:
-                        pass  # Process finished between poll() and terminate()
-                    except TimeoutError:
-                        pass  # Process did not terminate in time
-                next_running_procs = [
-                    item
-                    for item in next_running_procs
-                    if item not in terminated_procs
-                ]
-            raise subprocess.CalledProcessError(returncode, failed_proc.args)
-
-        running_procs = next_running_procs
-
-        if running_procs:
-            time.sleep(0.01)  # Small sleep to prevent busy-waiting
 
 
 def build(_opts):
@@ -115,7 +56,6 @@ def build(_opts):
             check=True,
         )
 
-    subprocesses = []
     for build_target in firmware_targets:
         cmd = [
             "cros",
@@ -124,13 +64,11 @@ def build(_opts):
             f"--build-target={build_target}",
         ]
         log_cmd(cmd, env=env)
-        subprocesses.append(
-            subprocess.Popen(  # pylint: disable=consider-using-with
-                cmd, env=env, stdin=subprocess.DEVNULL
-            )
+        subprocess.run(
+            cmd,
+            env=env,
+            check=True,
         )
-
-    wait_for_processes_early_failure(subprocesses)
 
 
 def log_cmd(cmd, env=None, cwd=None):
@@ -151,7 +89,6 @@ def test(_opts):
     """Runs all of the unit tests for AP firmware."""
     env = os.environ.copy()
     firmware_targets = _opts.firmware_targets.split(",")
-    subprocesses = []
     for build_target in firmware_targets:
         cmd = [
             "cros",
@@ -162,16 +99,11 @@ def test(_opts):
             "chromeos-base/ec-utils",
         ]
         log_cmd(cmd, env=env)
-        subprocesses.append(
-            subprocess.Popen(  # pylint: disable=consider-using-with
-                cmd, env=env, stdin=subprocess.DEVNULL
-            )
+        subprocess.run(
+            cmd,
+            env=env,
+            check=True,
         )
-
-    wait_for_processes_early_failure(subprocesses)
-
-    subprocesses = []
-    for build_target in firmware_targets:
         cmd = [
             "cros_run_unit_tests",
             "--emerge-verbose",
@@ -186,12 +118,7 @@ def test(_opts):
             "--no-testable-packages-ok",
         ]
         log_cmd(cmd, env=env)
-        subprocesses.append(
-            subprocess.Popen(  # pylint: disable=consider-using-with
-                cmd, env=env, stdin=subprocess.DEVNULL
-            )
-        )
-    wait_for_processes_early_failure(subprocesses)
+        subprocess.run(cmd, check=True, env=env, stdin=subprocess.DEVNULL)
 
 
 def get_bundle_dir(opts):
