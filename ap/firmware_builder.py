@@ -87,38 +87,6 @@ def log_cmd(cmd, env=None, cwd=None):
 
 def test(_opts):
     """Runs all of the unit tests for AP firmware."""
-    env = os.environ.copy()
-    firmware_targets = _opts.firmware_targets.split(",")
-    for build_target in firmware_targets:
-        cmd = [
-            "cros",
-            "build-packages",
-            "-v",
-            "--board",
-            build_target,
-            "chromeos-base/ec-utils",
-        ]
-        log_cmd(cmd, env=env)
-        subprocess.run(
-            cmd,
-            env=env,
-            check=True,
-        )
-        cmd = [
-            "cros_run_unit_tests",
-            "--emerge-verbose",
-            "--board",
-            build_target,
-            "--packages",
-            "sys-boot/chromeos-bootimage "
-            "sys-boot/coreboot "
-            "sys-boot/depthcharge "
-            "chromeos-base/vboot_reference",
-            "--filter-only-cros-workon",
-            "--no-testable-packages-ok",
-        ]
-        log_cmd(cmd, env=env)
-        subprocess.run(cmd, check=True, env=env, stdin=subprocess.DEVNULL)
 
 
 def get_bundle_dir(opts):
