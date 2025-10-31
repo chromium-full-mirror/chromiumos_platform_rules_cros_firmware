@@ -181,12 +181,12 @@ def bundle(opts):
             else:
                 tarball_name = f"{model}.tar.bz2"
             # Package the bin file
-            tarball_path = bundle_dir.joinpath(tarball_name)
+            tarball_path = os.path.join(bundle_dir, tarball_name)
             cmd = [
                 "tar",
                 "cvfj",
                 tarball_path,
-                f"--include={filename}",
+                filename,
                 ".",
             ]
             subprocess.run(
