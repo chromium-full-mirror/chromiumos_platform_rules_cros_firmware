@@ -10,9 +10,11 @@ It gets invoked by chromite/api/controller/firmware.py.
 """
 
 import argparse
+import glob
 import multiprocessing
 import os
 import pathlib
+import re
 import shlex
 import subprocess
 import sys
@@ -22,6 +24,7 @@ from google.protobuf import json_format
 
 # pylint: disable=wrong-import-order
 from chromite.api.gen_sdk.chromite.api import firmware_pb2
+from chromite.lib.chromeos_version import VersionInfo
 
 
 DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
@@ -69,6 +72,7 @@ def build(_opts):
             env=env,
             check=True,
         )
+    return 0
 
 
 def log_cmd(cmd, env=None, cwd=None):
@@ -85,8 +89,25 @@ def log_cmd(cmd, env=None, cwd=None):
     sys.stdout.flush()
 
 
+def find_checkout():
+    """Find the path to the base of the checkout (e.g., ~/chromiumos)."""
+    for path in pathlib.Path(__file__).resolve().parents:
+        if (path / ".repo").is_dir():
+            return path
+    raise FileNotFoundError("Unable to locate the root of the checkout")
+
+
+def get_version():
+    """Determine the current chroot version."""
+    ver = VersionInfo.from_repo(source_repo=find_checkout())
+    if ver:
+        return ver.VersionString()
+    return None
+
+
 def test(_opts):
     """Runs all of the unit tests for AP firmware."""
+    return 0
 
 
 def get_bundle_dir(opts):
@@ -98,6 +119,7 @@ def get_bundle_dir(opts):
         bundle_dir = opts.output_dir
     else:
         bundle_dir = DEFAULT_BUNDLE_DIRECTORY
+    bundle_dir = pathlib.Path(bundle_dir)
     if not os.path.isdir(bundle_dir):
         os.mkdir(bundle_dir)
     return bundle_dir
@@ -116,6 +138,7 @@ def bundle(opts):
     """Bundles the artifacts from each target into its own tarball."""
     info = firmware_pb2.FirmwareArtifactInfo()  # pylint: disable=no-member
     info.bcs_version_info.version_string = opts.bcs_version
+    version = opts.bcs_version or get_version()
     bundle_dir = get_bundle_dir(opts)
     firmware_targets = opts.firmware_targets.split(",")
     for build_target in firmware_targets:
@@ -147,7 +170,41 @@ def bundle(opts):
         )
         meta.tarball_info.firmware_image_name = build_target
 
-        write_metadata(opts, info)
+        pattern = os.path.join(artifacts_dir, "image-*.bin")
+        matched_files = glob.glob(pattern)
+        for filepath in matched_files:
+            filename = os.path.basename(filepath)
+            if filename.count(".") != 1:
+                continue
+            match = re.search(r"^image-(.*)\.bin$", filename)
+            if not match:
+                continue
+            model = match.group(1)
+            # karis.15709.192.0.tar.bz2
+            if version:
+                tarball_name = f"{model}.{version}.tar.bz2"
+            else:
+                tarball_name = f"{model}.tar.bz2"
+            # Package the bin file
+            tarball_path = bundle_dir.joinpath(tarball_name)
+            cmd = [
+                "tar",
+                "cvfj",
+                tarball_path,
+                filename,
+            ]
+            subprocess.run(
+                cmd,
+                check=True,
+                cwd=artifacts_dir,
+            )
+            meta = info.objects.add()
+            meta.file_name = tarball_name
+            meta.tarball_info.type = (
+                firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.MAIN  # pylint: disable=no-member
+            )
+    write_metadata(opts, info)
+    return 0
 
 
 def parse_args(args):
@@ -223,7 +280,7 @@ def main(args):
         return -1
 
     # Run selected sub command function
-    opts.func(opts)
+    return opts.func(opts)
 
 
 if __name__ == "__main__":
