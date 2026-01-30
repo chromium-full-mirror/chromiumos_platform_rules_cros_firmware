@@ -8,16 +8,25 @@ load("//bazel/repo_defs:cipd.bzl", _cipd_zip_repo = "cipd_zip_repo")
 load("//bazel/repo_defs:new_local_repository.bzl", _new_local_repository = "new_local_repository")
 load("//platform/rules_cros_firmware/repositories:depot_tools.bzl", _depot_tools = "depot_tools")
 
-# b/397441298: a bash script that replaces ti50-sdk's libc with the system's,
-# when in the chroot.
-#
-# Use `cp` instead of `ln` since symlinks don't work well with RBE in similar
-# applications of this logic (see post-commit discussion on
-# crrev.com/c/6254912).
-_patch_ti50_sdk_libc = """
-[[ -e /etc/cros_chroot_version ]] || exit 0
-cd lib && cp -a /lib/{ld-linux-x86-64.so.2,libc.so.6,libm.so.6} .
-"""
+# b/474065976: http_archive fails when extracting some sparse tar files.
+# Workaround this by using the tar executable to do the extracting.
+def _workaround_http_archive_impl(ctx):
+    tarfile = ctx.attr.url.rsplit("/", 1)[-1]
+    ctx.download(sha256 = ctx.attr.sha256, url = ctx.attr.url, output = tarfile)
+    result = ctx.execute([ctx.which("tar"), "xf", tarfile])
+    if result.return_code:
+        fail("Couldn't extract tar {}:\nSTDOUT:\n{}\nSTDERR:\n{}".format(tarfile, result.stdout, result.stderr))
+    ctx.file("BUILD.bazel", ctx.read(ctx.attr.build_file))
+
+_workaround_http_archive = repository_rule(
+    _workaround_http_archive_impl,
+    doc = "Workaround for sparse tar errors b/474065976",
+    attrs = {
+        "build_file": attr.label(allow_single_file = True),
+        "sha256": attr.string(),
+        "url": attr.string(),
+    },
+)
 
 def _fwsdk_deps_impl(module_ctx):
     generated_repos = []
@@ -32,6 +41,7 @@ def _fwsdk_deps_impl(module_ctx):
         return new_fn
 
     http_archive = repo_rule_wrapper(_http_archive)
+    workaround_http_archive = repo_rule_wrapper(_workaround_http_archive)
     depot_tools = repo_rule_wrapper(_depot_tools)
     git_repository = repo_rule_wrapper(_git_repository)
     new_local_repository = repo_rule_wrapper(_new_local_repository)
@@ -92,24 +102,23 @@ def _fwsdk_deps_impl(module_ctx):
     # tarball, and update below.  Additionally, this should be kept in sync
     # with the ebuild:
     # src/private-overlays/chromeos-overlay/chromeos-base/ti50-emulator
-    http_archive(
+    workaround_http_archive(
         name = "ti50-sdk",
-        sha256 = "77d8dee46fcde7e61787a288434f523d379189383c8dcad68139ef698dafc4fe",
+        sha256 = "5a9372ddd174562b19dd6a8da2800f5f6d293f507e60f5ba263cf77a26d41d2a",
         build_file = "//platform/ti50/common/toolchain:toolchain.BUILD",
-        url = "https://storage.googleapis.com/chromiumos-sdk/toolchains/ti50-sdk/0.0.1-r3/0c192e2e19a6b322188e31e0cdf69db57a0f0df7.tar.zst",
-        patch_cmds = [_patch_ti50_sdk_libc],
+        url = "https://storage.googleapis.com/chromiumos-sdk/toolchains/ti50-sdk/0.0.1-r5/7fe49f0046590177c6e551888d76466fc51f3d03.tar.zst",
     )
 
-    http_archive(
+    workaround_http_archive(
         name = "cros-sdk",
-        sha256 = "99cbebb56f82a299aad54e6fdc0f1215b5544003ee53ab2e3c701970d659c6d0",
+        sha256 = "ee31e319756ced00842829210c8275dae98b3883978194a59a979a512910e696",
         build_file = "//platform/ti50/common/toolchain:cros_sdk.BUILD",
-        url = "https://storage.googleapis.com/chromiumos-sdk/2023/05/x86_64-cros-linux-gnu-2023.05.04.004234.tar.xz",
+        url = "https://storage.googleapis.com/chromiumos-sdk/2026/01/x86_64-cros-linux-gnu-2026.01.01.81831.tar.xz",
     )
     git_repository(
         name = "compiler-builtins",
         remote = "https://github.com/rust-lang/compiler-builtins",
-        tag = "compiler_builtins-v0.1.84",
+        tag = "compiler_builtins-v0.1.160",
         build_file = "//platform/ti50/common/toolchain:compiler-builtins.BUILD",
     )
     cipd_zip_repo(
