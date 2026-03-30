@@ -147,7 +147,7 @@ def bundle(opts):
             os.mkdir(tarball_dir)
         tarball_name = "firmware_from_source.tar.bz2"
         tarball_path = os.path.join(tarball_dir, tarball_name)
-        artifacts_dir = os.path.join("/build", build_target, "firmware")
+        artifacts_dir = pathlib.Path("/build") / build_target / "firmware"
 
         cmd = [
             "tar",
@@ -155,8 +155,20 @@ def bundle(opts):
             tarball_path,
             "--exclude=*.d",
             "--exclude=*.o",
-            ".",
+            "--exclude=libpayload*",
         ]
+        cmd.extend(
+            x.relative_to(artifacts_dir)
+            for x in artifacts_dir.glob("*")
+            if not x.name
+            in (
+                "private-directories",
+                "coreboot-private",
+                "cbfs-ro-compress",
+                "cbfs-rw-compress-override",
+            )
+        )
+        log_cmd(cmd, cwd=artifacts_dir)
         subprocess.run(
             cmd,
             check=True,
