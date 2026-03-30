@@ -24,7 +24,7 @@ from google.protobuf import json_format
 
 # pylint: disable=wrong-import-order
 from chromite.api.gen_sdk.chromite.api import firmware_pb2
-from chromite.lib.chromeos_version import VersionInfo
+from chromite.lib import chromeos_version
 
 
 DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
@@ -99,7 +99,7 @@ def find_checkout():
 
 def get_version():
     """Determine the current chroot version."""
-    ver = VersionInfo.from_repo(source_repo=find_checkout())
+    ver = chromeos_version.VersionInfo.from_repo(source_repo=find_checkout())
     if ver:
         return ver.VersionString()
     return None
