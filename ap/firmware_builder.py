@@ -59,6 +59,7 @@ def build(_opts):
             check=True,
         )
 
+    failed_targets = []
     for build_target in firmware_targets:
         cmd = [
             "cros",
@@ -67,11 +68,18 @@ def build(_opts):
             f"--build-target={build_target}",
         ]
         log_cmd(cmd, env=env)
-        subprocess.run(
-            cmd,
-            env=env,
-            check=True,
-        )
+        try:
+            subprocess.run(
+                cmd,
+                env=env,
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            print(e)
+            failed_targets.append(build_target)
+    if failed_targets:
+        print(f"Some targets failed: {failed_targets}")
+        return 1
     return 0
 
 
