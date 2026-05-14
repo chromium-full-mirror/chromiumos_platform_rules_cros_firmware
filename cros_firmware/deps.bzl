@@ -104,9 +104,9 @@ def _fwsdk_deps_impl(module_ctx):
     # src/private-overlays/chromeos-overlay/chromeos-base/ti50-emulator
     workaround_http_archive(
         name = "ti50-sdk",
-        sha256 = "5a9372ddd174562b19dd6a8da2800f5f6d293f507e60f5ba263cf77a26d41d2a",
+        sha256 = "c4129dcd2fc39e801094e6bcfa1896f42ea31623890ce1a6de252faf432575ed",
         build_file = "//platform/ti50/common/toolchain:toolchain.BUILD",
-        url = "https://storage.googleapis.com/chromiumos-sdk/toolchains/ti50-sdk/0.0.1-r5/7fe49f0046590177c6e551888d76466fc51f3d03.tar.zst",
+        url = "https://storage.googleapis.com/chromiumos-sdk/toolchains/ti50-sdk/0.0.1-r5/9a8e76c58f731daa92c314ab966fed30e8dbd768.tar.zst",
     )
 
     workaround_http_archive(
