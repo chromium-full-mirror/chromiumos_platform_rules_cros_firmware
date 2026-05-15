@@ -189,6 +189,7 @@ def bundle(opts):
             firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.MAIN  # pylint: disable=no-member
         )
         meta.tarball_info.firmware_image_name = build_target
+        meta.tarball_info.board.append(build_target)
 
         pattern = os.path.join(artifacts_dir, "image-*.bin")
         matched_files = glob.glob(pattern)
@@ -223,6 +224,7 @@ def bundle(opts):
             meta.tarball_info.type = (
                 firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.MAIN  # pylint: disable=no-member
             )
+            meta.tarball_info.board.append(build_target)
     write_metadata(opts, info)
     return 0
 
