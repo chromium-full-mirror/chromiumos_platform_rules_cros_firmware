@@ -126,6 +126,11 @@ def _fwsdk_deps_impl(module_ctx):
         build_file = "//platform/ti50/common/toolchain:codesigner.BUILD",
         url = "cipd://chromeos_internal/infra/tools/cr50-utils:buTaioQouf3i3Hoix1b039uvng4RpflbSRj-7YMkAXoC",
     )
+    new_local_repository(
+        name = "opentitantool",
+        build_file = "//platform/ti50/common/tools:opentitantool.BUILD",
+        path = "third_party/lowrisc/opentitan/bazel-bin/sw/host/opentitantool",
+    )
 
     depot_tools(
         name = "depot_tools",
