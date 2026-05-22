@@ -91,6 +91,49 @@ _opentitantool_binary_repo = repository_rule(
     local = True,
 )
 
+def _codesigner_binary_repo_impl(repo_ctx):
+    # Find cr50-utils path
+    cr50_utils_path = repo_ctx.workspace_root.get_child("platform/cr50-utils")
+    codesigner_dir = cr50_utils_path.get_child("software").get_child("tools").get_child("codesigner")
+
+    # Run make codesigner
+    repo_ctx.report_progress("Building codesigner from source...")
+
+    env = {}
+    if "PATH" in repo_ctx.os.environ:
+        env["PATH"] = repo_ctx.os.environ["PATH"]
+    if "HOME" in repo_ctx.os.environ:
+        env["HOME"] = repo_ctx.os.environ["HOME"]
+
+    result = repo_ctx.execute(
+        ["make", "codesigner"],
+        working_directory = str(codesigner_dir),
+        environment = env,
+    )
+
+    if result.return_code != 0:
+        fail("Failed to build codesigner:\nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr))
+
+    # Create bin and lib directories in the repository root
+    repo_ctx.execute(["mkdir", "-p", "bin"])
+    repo_ctx.execute(["mkdir", "-p", "lib"])
+
+    # Copy the built codesigner to bin/cr50-codesigner
+    built_binary = codesigner_dir.get_child("codesigner")
+    cp_result = repo_ctx.execute(["cp", str(built_binary), "bin/cr50-codesigner"])
+    if cp_result.return_code != 0:
+        fail("Failed to copy codesigner binary: %s" % cp_result.stderr)
+
+    repo_ctx.symlink(repo_ctx.attr.build_file, "BUILD.bazel")
+
+_codesigner_binary_repo = repository_rule(
+    implementation = _codesigner_binary_repo_impl,
+    attrs = {
+        "build_file": attr.label(mandatory = True, allow_single_file = True),
+    },
+    local = True,
+)
+
 def _fwsdk_deps_impl(module_ctx):
     generated_repos = []
 
@@ -110,6 +153,7 @@ def _fwsdk_deps_impl(module_ctx):
     new_local_repository = repo_rule_wrapper(_new_local_repository)
     cipd_zip_repo = repo_rule_wrapper(_cipd_zip_repo)
     opentitantool_binary_repo = repo_rule_wrapper(_opentitantool_binary_repo)
+    codesigner_binary_repo = repo_rule_wrapper(_codesigner_binary_repo)
 
     http_archive(
         name = "ec_devutils",
@@ -185,10 +229,9 @@ def _fwsdk_deps_impl(module_ctx):
         tag = "compiler_builtins-v0.1.160",
         build_file = "//platform/ti50/common/toolchain:compiler-builtins.BUILD",
     )
-    cipd_zip_repo(
+    codesigner_binary_repo(
         name = "codesigner",
         build_file = "//platform/ti50/common/toolchain:codesigner.BUILD",
-        url = "cipd://chromeos_internal/infra/tools/cr50-utils:buTaioQouf3i3Hoix1b039uvng4RpflbSRj-7YMkAXoC",
     )
     opentitantool_binary_repo(
         name = "opentitantool",
