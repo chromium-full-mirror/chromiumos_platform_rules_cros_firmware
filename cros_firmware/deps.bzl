@@ -9,6 +9,69 @@ load("//bazel/repo_defs:new_local_repository.bzl", _new_local_repository = "new_
 load("//platform/rules_cros_firmware/repositories:depot_tools.bzl", _depot_tools = "depot_tools")
 load("//third_party/lowrisc/opentitan/rules:nonhermetic.bzl", _nonhermetic_repo = "nonhermetic_repo")
 
+def _opentitantool_binary_repo_impl(repo_ctx):
+    # Find opentitan path
+    opentitan_path = repo_ctx.workspace_root.get_child("third_party/lowrisc/opentitan")
+
+    # Run bazel build //sw/host/opentitantool
+    bazelisk = opentitan_path.get_child("bazelisk.sh")
+
+    repo_ctx.report_progress("Building opentitantool...")
+
+    # We need to pass PATH to execute so it can find tools like curl, tar,
+    # python, etc.
+    env = {}
+    if "PATH" in repo_ctx.os.environ:
+        env["PATH"] = repo_ctx.os.environ["PATH"]
+    if "HOME" in repo_ctx.os.environ:
+        env["HOME"] = repo_ctx.os.environ["HOME"]
+
+    result = repo_ctx.execute(
+        [bazelisk, "build", "--symlink_prefix=/", "//sw/host/opentitantool"],
+        working_directory = str(opentitan_path),
+        environment = env,
+    )
+
+    if result.return_code != 0:
+        fail("Failed to build opentitantool:\nSTDOUT:\n%s\nSTDERR:\n%s" %
+             (result.stdout, result.stderr))
+
+    # Run bazel info bazel-bin to find the actual output directory
+    info_result = repo_ctx.execute(
+        [bazelisk, "info", "bazel-bin"],
+        working_directory = str(opentitan_path),
+        environment = env,
+    )
+
+    if info_result.return_code != 0:
+        fail("Failed to get bazel-bin info:\nSTDOUT:\n%s\nSTDERR:\n%s" %
+             (info_result.stdout, info_result.stderr))
+
+    bazel_bin_path_str = info_result.stdout.strip()
+    bazel_bin_path = repo_ctx.path(bazel_bin_path_str)
+
+    built_dir = bazel_bin_path.get_child("sw").get_child("host").get_child("opentitantool")
+
+    # Copy the contents of built_dir to the repository root instead of symlinking.
+    # This avoids "Inconsistent filesystem operations" errors when underlying files are cleaned.
+    cp_result = repo_ctx.execute(
+        ["bash", "-c", "cp -R -L \"$1\"/. .", "--", str(built_dir)],
+        environment = env,
+    )
+    if cp_result.return_code != 0:
+        fail("Failed to copy opentitantool files:\nSTDOUT:\n%s\nSTDERR:\n%s" %
+             (cp_result.stdout, cp_result.stderr))
+
+    repo_ctx.symlink(repo_ctx.attr.build_file, "BUILD.bazel")
+
+_opentitantool_binary_repo = repository_rule(
+    implementation = _opentitantool_binary_repo_impl,
+    attrs = {
+        "build_file": attr.label(mandatory = True, allow_single_file = True),
+    },
+    local = True,
+)
+
 def _fwsdk_deps_impl(module_ctx):
     generated_repos = []
 
@@ -27,6 +90,7 @@ def _fwsdk_deps_impl(module_ctx):
     new_local_repository = repo_rule_wrapper(_new_local_repository)
     nonhermetic_repo = repo_rule_wrapper(_nonhermetic_repo)
     cipd_zip_repo = repo_rule_wrapper(_cipd_zip_repo)
+    opentitantool_binary_repo = repo_rule_wrapper(_opentitantool_binary_repo)
 
     http_archive(
         name = "ec_devutils",
@@ -163,10 +227,9 @@ def _fwsdk_deps_impl(module_ctx):
         build_file = "//platform/ti50/common/toolchain:codesigner.BUILD",
         url = "cipd://chromeos_internal/infra/tools/cr50-utils:buTaioQouf3i3Hoix1b039uvng4RpflbSRj-7YMkAXoC",
     )
-    new_local_repository(
+    opentitantool_binary_repo(
         name = "opentitantool",
         build_file = "//platform/ti50/common/tools:opentitantool.BUILD",
-        path = "third_party/lowrisc/opentitan/bazel-bin/sw/host/opentitantool",
     )
 
     depot_tools(
