@@ -25,6 +25,9 @@ from google.protobuf import json_format
 # pylint: disable=wrong-import-order
 from chromite.api.gen_sdk.chromite.api import firmware_pb2
 from chromite.lib import chromeos_version
+from chromite.lib import chroot_lib
+from chromite.lib import sysroot_lib
+from chromite.service import artifacts
 
 
 DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
@@ -176,6 +179,9 @@ def write_metadata(opts, info):
 
 def bundle(opts):
     """Bundles the artifacts from each target into its own tarball."""
+    fw_types = (
+        firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType  # pylint: disable=no-member
+    )
     info = firmware_pb2.FirmwareArtifactInfo()  # pylint: disable=no-member
     info.bcs_version_info.version_string = opts.bcs_version
     version = opts.bcs_version or get_version()
@@ -189,39 +195,60 @@ def bundle(opts):
         tarball_path = os.path.join(tarball_dir, tarball_name)
         artifacts_dir = pathlib.Path("/build") / build_target / "firmware"
 
-        cmd = [
-            "tar",
-            "cvfj",
-            tarball_path,
-            "--exclude=*.d",
-            "--exclude=*.o",
-            "--exclude=libpayload*",
-        ]
-        cmd.extend(
-            x.relative_to(artifacts_dir)
-            for x in artifacts_dir.glob("*")
-            if not x.name
-            in (
-                "private-directories",
-                "coreboot-private",
-                "cbfs-ro-compress",
-                "cbfs-rw-compress-override",
-            )
-        )
-        log_cmd(cmd, cwd=artifacts_dir)
-        subprocess.run(
-            cmd,
-            check=True,
-            cwd=artifacts_dir,
-        )
+        # Only package firmware if it exists and has files
+        if artifacts_dir.is_dir():
+            files_to_pack = [
+                x.relative_to(artifacts_dir)
+                for x in artifacts_dir.glob("*")
+                if not x.name
+                in (
+                    "private-directories",
+                    "coreboot-private",
+                    "cbfs-ro-compress",
+                    "cbfs-rw-compress-override",
+                )
+            ]
+            if files_to_pack:
+                cmd = [
+                    "tar",
+                    "cvfj",
+                    tarball_path,
+                    "--exclude=*.d",
+                    "--exclude=*.o",
+                    "--exclude=libpayload*",
+                ]
+                cmd.extend(files_to_pack)
+                log_cmd(cmd, cwd=artifacts_dir)
+                subprocess.run(
+                    cmd,
+                    check=True,
+                    cwd=artifacts_dir,
+                )
 
-        meta = info.objects.add()
-        meta.file_name = f"{build_target}/{tarball_name}"
-        meta.tarball_info.type = (
-            firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.MAIN  # pylint: disable=no-member
-        )
-        meta.tarball_info.firmware_image_name = build_target
-        meta.tarball_info.board.append(build_target)
+                meta = info.objects.add()
+                meta.file_name = f"{build_target}/{tarball_name}"
+                meta.tarball_info.type = fw_types.MAIN
+                meta.tarball_info.firmware_image_name = build_target
+                meta.tarball_info.board.append(build_target)
+
+        # Collect and bundle ebuild logs using chromite helper
+        try:
+            chroot = chroot_lib.Chroot()
+            sysroot = sysroot_lib.Sysroot(f"/build/{build_target}")
+
+            logs_tarball_name = artifacts.BundleEBuildLogsTarball(
+                chroot, sysroot, tarball_dir
+            )
+
+            if logs_tarball_name:
+                # Register the logs tarball in metadata
+                meta = info.objects.add()
+                meta.file_name = f"{build_target}/{logs_tarball_name}"
+                meta.tarball_info.type = fw_types.MAIN
+                meta.tarball_info.board.append(build_target)
+        except Exception as e:
+            # Don't let log collection failure crash the bundler
+            print(f"Failed to collect ebuild logs using helper: {e}")
 
         pattern = os.path.join(artifacts_dir, "image-*.bin")
         matched_files = glob.glob(pattern)
@@ -253,9 +280,7 @@ def bundle(opts):
             )
             meta = info.objects.add()
             meta.file_name = tarball_name
-            meta.tarball_info.type = (
-                firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.MAIN  # pylint: disable=no-member
-            )
+            meta.tarball_info.type = fw_types.MAIN
             meta.tarball_info.board.append(build_target)
     write_metadata(opts, info)
     return 0
