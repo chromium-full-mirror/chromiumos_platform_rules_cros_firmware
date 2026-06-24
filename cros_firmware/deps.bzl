@@ -28,6 +28,112 @@ _workaround_http_archive = repository_rule(
     },
 )
 
+def _opentitantool_binary_repo_impl(repo_ctx):
+    # Find opentitan path
+    opentitan_path = repo_ctx.workspace_root.get_child("third_party/lowrisc/opentitan")
+
+    # Run bazel build //sw/host/opentitantool
+    bazelisk = opentitan_path.get_child("bazelisk.sh")
+
+    repo_ctx.report_progress("Building opentitantool...")
+
+    # We need to pass PATH to execute so it can find tools like curl, tar,
+    # python, etc.
+    env = {}
+    if "PATH" in repo_ctx.os.environ:
+        env["PATH"] = repo_ctx.os.environ["PATH"]
+    if "HOME" in repo_ctx.os.environ:
+        env["HOME"] = repo_ctx.os.environ["HOME"]
+
+    result = repo_ctx.execute(
+        [bazelisk, "build", "--symlink_prefix=/", "//sw/host/opentitantool"],
+        working_directory = str(opentitan_path),
+        environment = env,
+    )
+
+    if result.return_code != 0:
+        fail("Failed to build opentitantool:\nSTDOUT:\n%s\nSTDERR:\n%s" %
+             (result.stdout, result.stderr))
+
+    # Run bazel info bazel-bin to find the actual output directory
+    info_result = repo_ctx.execute(
+        [bazelisk, "info", "bazel-bin"],
+        working_directory = str(opentitan_path),
+        environment = env,
+    )
+
+    if info_result.return_code != 0:
+        fail("Failed to get bazel-bin info:\nSTDOUT:\n%s\nSTDERR:\n%s" %
+             (info_result.stdout, info_result.stderr))
+
+    bazel_bin_path_str = info_result.stdout.strip()
+    bazel_bin_path = repo_ctx.path(bazel_bin_path_str)
+
+    built_dir = bazel_bin_path.get_child("sw").get_child("host").get_child("opentitantool")
+
+    # Copy the contents of built_dir to the repository root instead of symlinking.
+    # This avoids "Inconsistent filesystem operations" errors when underlying files are cleaned.
+    cp_result = repo_ctx.execute(
+        ["bash", "-c", "cp -R -L \"$1\"/. .", "--", str(built_dir)],
+        environment = env,
+    )
+    if cp_result.return_code != 0:
+        fail("Failed to copy opentitantool files:\nSTDOUT:\n%s\nSTDERR:\n%s" %
+             (cp_result.stdout, cp_result.stderr))
+
+    repo_ctx.symlink(repo_ctx.attr.build_file, "BUILD.bazel")
+
+_opentitantool_binary_repo = repository_rule(
+    implementation = _opentitantool_binary_repo_impl,
+    attrs = {
+        "build_file": attr.label(mandatory = True, allow_single_file = True),
+    },
+    local = True,
+)
+
+def _codesigner_binary_repo_impl(repo_ctx):
+    # Find cr50-utils path
+    cr50_utils_path = repo_ctx.workspace_root.get_child("platform/cr50-utils")
+    codesigner_dir = cr50_utils_path.get_child("software").get_child("tools").get_child("codesigner")
+
+    # Run make codesigner
+    repo_ctx.report_progress("Building codesigner from source...")
+
+    env = {}
+    if "PATH" in repo_ctx.os.environ:
+        env["PATH"] = repo_ctx.os.environ["PATH"]
+    if "HOME" in repo_ctx.os.environ:
+        env["HOME"] = repo_ctx.os.environ["HOME"]
+
+    result = repo_ctx.execute(
+        ["make", "codesigner"],
+        working_directory = str(codesigner_dir),
+        environment = env,
+    )
+
+    if result.return_code != 0:
+        fail("Failed to build codesigner:\nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr))
+
+    # Create bin and lib directories in the repository root
+    repo_ctx.execute(["mkdir", "-p", "bin"])
+    repo_ctx.execute(["mkdir", "-p", "lib"])
+
+    # Copy the built codesigner to bin/cr50-codesigner
+    built_binary = codesigner_dir.get_child("codesigner")
+    cp_result = repo_ctx.execute(["cp", str(built_binary), "bin/cr50-codesigner"])
+    if cp_result.return_code != 0:
+        fail("Failed to copy codesigner binary: %s" % cp_result.stderr)
+
+    repo_ctx.symlink(repo_ctx.attr.build_file, "BUILD.bazel")
+
+_codesigner_binary_repo = repository_rule(
+    implementation = _codesigner_binary_repo_impl,
+    attrs = {
+        "build_file": attr.label(mandatory = True, allow_single_file = True),
+    },
+    local = True,
+)
+
 def _fwsdk_deps_impl(module_ctx):
     generated_repos = []
 
@@ -46,6 +152,8 @@ def _fwsdk_deps_impl(module_ctx):
     git_repository = repo_rule_wrapper(_git_repository)
     new_local_repository = repo_rule_wrapper(_new_local_repository)
     cipd_zip_repo = repo_rule_wrapper(_cipd_zip_repo)
+    opentitantool_binary_repo = repo_rule_wrapper(_opentitantool_binary_repo)
+    codesigner_binary_repo = repo_rule_wrapper(_codesigner_binary_repo)
 
     http_archive(
         name = "ec_devutils",
@@ -104,9 +212,9 @@ def _fwsdk_deps_impl(module_ctx):
     # src/private-overlays/chromeos-overlay/chromeos-base/ti50-emulator
     workaround_http_archive(
         name = "ti50-sdk",
-        sha256 = "5a9372ddd174562b19dd6a8da2800f5f6d293f507e60f5ba263cf77a26d41d2a",
+        sha256 = "c4129dcd2fc39e801094e6bcfa1896f42ea31623890ce1a6de252faf432575ed",
         build_file = "//platform/ti50/common/toolchain:toolchain.BUILD",
-        url = "https://storage.googleapis.com/chromiumos-sdk/toolchains/ti50-sdk/0.0.1-r5/7fe49f0046590177c6e551888d76466fc51f3d03.tar.zst",
+        url = "https://storage.googleapis.com/chromiumos-sdk/toolchains/ti50-sdk/0.0.1-r5/9a8e76c58f731daa92c314ab966fed30e8dbd768.tar.zst",
     )
 
     workaround_http_archive(
@@ -121,10 +229,13 @@ def _fwsdk_deps_impl(module_ctx):
         tag = "compiler_builtins-v0.1.160",
         build_file = "//platform/ti50/common/toolchain:compiler-builtins.BUILD",
     )
-    cipd_zip_repo(
+    codesigner_binary_repo(
         name = "codesigner",
         build_file = "//platform/ti50/common/toolchain:codesigner.BUILD",
-        url = "cipd://chromeos_internal/infra/tools/cr50-utils:buTaioQouf3i3Hoix1b039uvng4RpflbSRj-7YMkAXoC",
+    )
+    opentitantool_binary_repo(
+        name = "opentitantool",
+        build_file = "//platform/ti50/common/tools:opentitantool.BUILD",
     )
 
     depot_tools(
