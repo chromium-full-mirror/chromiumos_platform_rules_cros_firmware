@@ -24,7 +24,7 @@ from google.protobuf import json_format
 
 # pylint: disable=wrong-import-order
 from chromite.api.gen_sdk.chromite.api import firmware_pb2
-from chromite.lib.chromeos_version import VersionInfo
+from chromite.lib import chromeos_version
 
 
 DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
@@ -59,6 +59,7 @@ def build(_opts):
             check=True,
         )
 
+    failed_targets = []
     for build_target in firmware_targets:
         cmd = [
             "cros",
@@ -67,11 +68,18 @@ def build(_opts):
             f"--build-target={build_target}",
         ]
         log_cmd(cmd, env=env)
-        subprocess.run(
-            cmd,
-            env=env,
-            check=True,
-        )
+        try:
+            subprocess.run(
+                cmd,
+                env=env,
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            print(e)
+            failed_targets.append(build_target)
+    if failed_targets:
+        print(f"Some targets failed: {failed_targets}")
+        return 1
     return 0
 
 
@@ -99,7 +107,7 @@ def find_checkout():
 
 def get_version():
     """Determine the current chroot version."""
-    ver = VersionInfo.from_repo(source_repo=find_checkout())
+    ver = chromeos_version.VersionInfo.from_repo(source_repo=find_checkout())
     if ver:
         return ver.VersionString()
     return None
@@ -107,6 +115,38 @@ def get_version():
 
 def test(_opts):
     """Runs all of the unit tests for AP firmware."""
+    env = os.environ.copy()
+    firmware_targets = _opts.firmware_targets.split(",")
+    for build_target in firmware_targets:
+        cmd = [
+            "cros",
+            "build-packages",
+            "-v",
+            "--board",
+            build_target,
+            "chromeos-base/ec-utils",
+        ]
+        log_cmd(cmd, env=env)
+        subprocess.run(
+            cmd,
+            env=env,
+            check=True,
+        )
+        cmd = [
+            "cros_run_unit_tests",
+            "--emerge-verbose",
+            "--board",
+            build_target,
+            "--packages",
+            "sys-boot/chromeos-bootimage "
+            "sys-boot/coreboot "
+            "sys-boot/depthcharge "
+            "chromeos-base/vboot_reference",
+            "--filter-only-cros-workon",
+            "--no-testable-packages-ok",
+        ]
+        log_cmd(cmd, env=env)
+        subprocess.run(cmd, check=True, env=env, stdin=subprocess.DEVNULL)
     return 0
 
 
@@ -147,7 +187,7 @@ def bundle(opts):
             os.mkdir(tarball_dir)
         tarball_name = "firmware_from_source.tar.bz2"
         tarball_path = os.path.join(tarball_dir, tarball_name)
-        artifacts_dir = os.path.join("/build", build_target, "firmware")
+        artifacts_dir = pathlib.Path("/build") / build_target / "firmware"
 
         cmd = [
             "tar",
@@ -155,8 +195,20 @@ def bundle(opts):
             tarball_path,
             "--exclude=*.d",
             "--exclude=*.o",
-            ".",
+            "--exclude=libpayload*",
         ]
+        cmd.extend(
+            x.relative_to(artifacts_dir)
+            for x in artifacts_dir.glob("*")
+            if not x.name
+            in (
+                "private-directories",
+                "coreboot-private",
+                "cbfs-ro-compress",
+                "cbfs-rw-compress-override",
+            )
+        )
+        log_cmd(cmd, cwd=artifacts_dir)
         subprocess.run(
             cmd,
             check=True,
@@ -169,6 +221,7 @@ def bundle(opts):
             firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.MAIN  # pylint: disable=no-member
         )
         meta.tarball_info.firmware_image_name = build_target
+        meta.tarball_info.board.append(build_target)
 
         pattern = os.path.join(artifacts_dir, "image-*.bin")
         matched_files = glob.glob(pattern)
@@ -203,6 +256,7 @@ def bundle(opts):
             meta.tarball_info.type = (
                 firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.MAIN  # pylint: disable=no-member
             )
+            meta.tarball_info.board.append(build_target)
     write_metadata(opts, info)
     return 0
 
