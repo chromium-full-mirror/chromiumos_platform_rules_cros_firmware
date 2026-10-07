@@ -11,6 +11,7 @@ It gets invoked by chromite/api/controller/firmware.py.
 
 import argparse
 import glob
+import logging
 import multiprocessing
 import os
 import pathlib
@@ -21,6 +22,7 @@ import sys
 
 # pylint: disable=import-error
 from google.protobuf import json_format
+import repository_prep
 
 # pylint: disable=wrong-import-order
 from chromite.api.gen_sdk.chromite.api import firmware_pb2
@@ -100,17 +102,11 @@ def log_cmd(cmd, env=None, cwd=None):
     sys.stdout.flush()
 
 
-def find_checkout():
-    """Find the path to the base of the checkout (e.g., ~/chromiumos)."""
-    for path in pathlib.Path(__file__).resolve().parents:
-        if (path / ".repo").is_dir():
-            return path
-    raise FileNotFoundError("Unable to locate the root of the checkout")
-
-
 def get_version():
     """Determine the current chroot version."""
-    ver = chromeos_version.VersionInfo.from_repo(source_repo=find_checkout())
+    ver = chromeos_version.VersionInfo.from_repo(
+        source_repo=repository_prep.find_checkout()
+    )
     if ver:
         return ver.VersionString()
     return None
@@ -305,6 +301,27 @@ def parse_args(args):
         help='Build with the USE="avb".',
     )
 
+    parser.add_argument(
+        "--patches-dir",
+        dest="patches_dirs",
+        action="append",
+        type=pathlib.Path,
+        required=False,
+        help="Directory containing patches to apply. Can be specified multiple "
+        "times. Defaults to upstream_overrides/patches and ec-private/patches.",
+    )
+
+    parser.add_argument(
+        "--src-override-dir",
+        dest="src_override_dirs",
+        action="append",
+        type=pathlib.Path,
+        required=False,
+        help="Directory containing source overrides to copy. Can be specified "
+        "multiple times. Defaults to upstream_overrides/src-override and "
+        "ec-private/src-override.",
+    )
+
     sub_cmds = parser.add_subparsers(required=True)
 
     build_cmd = sub_cmds.add_parser("build", help="Builds all firmware targets")
@@ -326,8 +343,19 @@ def main(args):
         print("Must select a valid sub command!")
         return -1
 
-    # Run selected sub command function
-    return opts.func(opts)
+    if getattr(opts.func, "__name__", "") == "bundle":
+        return opts.func(opts)
+
+    try:
+        repository_prep.find_checkout()
+    except FileNotFoundError:
+        return opts.func(opts)
+
+    # AP builds invoke Portage cros-workon against the host checkout in-place;
+    # prepared_workspace omits ec_dir so CodebasePreparer restores on exit.
+    logging.basicConfig(level=logging.INFO)
+    with repository_prep.prepared_workspace(opts):
+        return opts.func(opts)
 
 
 if __name__ == "__main__":
