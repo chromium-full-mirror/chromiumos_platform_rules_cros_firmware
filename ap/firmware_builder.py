@@ -17,6 +17,7 @@ import os
 import pathlib
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 
@@ -36,6 +37,13 @@ DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
 DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
 
 ROOT_DIR = pathlib.Path(__file__).parent.parent.parent.parent.parent.resolve()
+
+# The config files that chromeos-bootimage installs alongside image-<model>.bin.
+IMAGE_CONFIG_KINDS = (
+    "coreboot",
+    "depthcharge",
+    "libpayload",
+)
 
 
 def build(_opts):
@@ -139,6 +147,30 @@ def write_metadata(opts, info):
     )
     with open(bundle_metadata_file, "w", encoding="utf-8") as file:
         file.write(json_format.MessageToJson(info))
+
+
+def export_configs(artifacts_dir, model, bundle_dir):
+    """Copies the configs that an AP image was built with into the bundle.
+
+    Args:
+        artifacts_dir: The /build/<target>/firmware directory.
+        model: The model of the image.
+        bundle_dir: The directory of the bundle.
+
+    Returns:
+        A list of (file name relative to bundle_dir, kind) tuples.
+    """
+    exports = []
+    for kind in IMAGE_CONFIG_KINDS:
+        src = pathlib.Path(artifacts_dir) / f"image-{model}.{kind}.config"
+        if not src.is_file():
+            continue
+        file_name = f"configs/{model}/{kind}.config"
+        dest = pathlib.Path(bundle_dir) / file_name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, dest)
+        exports.append((file_name, kind))
+    return exports
 
 
 def bundle(opts):
@@ -246,6 +278,15 @@ def bundle(opts):
             meta.file_name = tarball_name
             meta.tarball_info.type = fw_types.MAIN
             meta.tarball_info.board.append(build_target)
+            # Export the config files as they are, next to the tarballs.
+            for file_name, kind in export_configs(
+                artifacts_dir, model, bundle_dir
+            ):
+                meta = info.objects.add()
+                meta.file_name = file_name
+                meta.config_info.board.append(build_target)
+                meta.config_info.target = model
+                meta.config_info.kind = kind
     write_metadata(opts, info)
     return 0
 
