@@ -141,7 +141,7 @@ def write_metadata(opts, info):
         file.write(json_format.MessageToJson(info))
 
 
-def bundle(opts):
+def bundle(opts: argparse.Namespace) -> int:
     """Bundles the artifacts from each target into its own tarball."""
     fw_types = (
         firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType  # pylint: disable=no-member
@@ -180,6 +180,15 @@ def bundle(opts):
                     "--exclude=*.d",
                     "--exclude=*.o",
                     "--exclude=libpayload*",
+                    "--exclude=zephyr*",
+                    "--exclude=ec.*",
+                    "--exclude=component_manifest.json",
+                    "--exclude=second_loader_fw.bin",
+                    "--exclude=npcx_monitor.bin",
+                    "--exclude=libsharedobjs*",
+                    "--exclude=ish_fw.bin",
+                    "--exclude=database.bin",
+                    "--exclude=tokens.bin",
                 ]
                 cmd.extend(files_to_pack)
                 log_cmd(cmd, cwd=artifacts_dir)
