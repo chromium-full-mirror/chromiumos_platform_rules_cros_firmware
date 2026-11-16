@@ -11,16 +11,19 @@ It gets invoked by chromite/api/controller/firmware.py.
 
 import argparse
 import glob
+import logging
 import multiprocessing
 import os
 import pathlib
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 
 # pylint: disable=import-error
 from google.protobuf import json_format
+import repository_prep
 
 # pylint: disable=wrong-import-order
 from chromite.api.gen_sdk.chromite.api import firmware_pb2
@@ -34,6 +37,13 @@ DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
 DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
 
 ROOT_DIR = pathlib.Path(__file__).parent.parent.parent.parent.parent.resolve()
+
+# The config files that chromeos-bootimage installs alongside image-<model>.bin.
+IMAGE_CONFIG_KINDS = (
+    "coreboot",
+    "depthcharge",
+    "libpayload",
+)
 
 
 def build(_opts):
@@ -100,17 +110,11 @@ def log_cmd(cmd, env=None, cwd=None):
     sys.stdout.flush()
 
 
-def find_checkout():
-    """Find the path to the base of the checkout (e.g., ~/chromiumos)."""
-    for path in pathlib.Path(__file__).resolve().parents:
-        if (path / ".repo").is_dir():
-            return path
-    raise FileNotFoundError("Unable to locate the root of the checkout")
-
-
 def get_version():
     """Determine the current chroot version."""
-    ver = chromeos_version.VersionInfo.from_repo(source_repo=find_checkout())
+    ver = chromeos_version.VersionInfo.from_repo(
+        source_repo=repository_prep.find_checkout()
+    )
     if ver:
         return ver.VersionString()
     return None
@@ -145,7 +149,31 @@ def write_metadata(opts, info):
         file.write(json_format.MessageToJson(info))
 
 
-def bundle(opts):
+def export_configs(artifacts_dir, model, bundle_dir):
+    """Copies the configs that an AP image was built with into the bundle.
+
+    Args:
+        artifacts_dir: The /build/<target>/firmware directory.
+        model: The model of the image.
+        bundle_dir: The directory of the bundle.
+
+    Returns:
+        A list of (file name relative to bundle_dir, kind) tuples.
+    """
+    exports = []
+    for kind in IMAGE_CONFIG_KINDS:
+        src = pathlib.Path(artifacts_dir) / f"image-{model}.{kind}.config"
+        if not src.is_file():
+            continue
+        file_name = f"configs/{model}/{kind}.config"
+        dest = pathlib.Path(bundle_dir) / file_name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, dest)
+        exports.append((file_name, kind))
+    return exports
+
+
+def bundle(opts: argparse.Namespace) -> int:
     """Bundles the artifacts from each target into its own tarball."""
     fw_types = (
         firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType  # pylint: disable=no-member
@@ -184,6 +212,15 @@ def bundle(opts):
                     "--exclude=*.d",
                     "--exclude=*.o",
                     "--exclude=libpayload*",
+                    "--exclude=zephyr*",
+                    "--exclude=ec.*",
+                    "--exclude=component_manifest.json",
+                    "--exclude=second_loader_fw.bin",
+                    "--exclude=npcx_monitor.bin",
+                    "--exclude=libsharedobjs*",
+                    "--exclude=ish_fw.bin",
+                    "--exclude=database.bin",
+                    "--exclude=tokens.bin",
                 ]
                 cmd.extend(files_to_pack)
                 log_cmd(cmd, cwd=artifacts_dir)
@@ -250,6 +287,15 @@ def bundle(opts):
             meta.file_name = tarball_name
             meta.tarball_info.type = fw_types.MAIN
             meta.tarball_info.board.append(build_target)
+            # Export the config files as they are, next to the tarballs.
+            for file_name, kind in export_configs(
+                artifacts_dir, model, bundle_dir
+            ):
+                meta = info.objects.add()
+                meta.file_name = file_name
+                meta.config_info.board.append(build_target)
+                meta.config_info.target = model
+                meta.config_info.kind = kind
     write_metadata(opts, info)
     return 0
 
@@ -305,6 +351,27 @@ def parse_args(args):
         help='Build with the USE="avb".',
     )
 
+    parser.add_argument(
+        "--patches-dir",
+        dest="patches_dirs",
+        action="append",
+        type=pathlib.Path,
+        required=False,
+        help="Directory containing patches to apply. Can be specified multiple "
+        "times. Defaults to upstream_overrides/patches and ec-private/patches.",
+    )
+
+    parser.add_argument(
+        "--src-override-dir",
+        dest="src_override_dirs",
+        action="append",
+        type=pathlib.Path,
+        required=False,
+        help="Directory containing source overrides to copy. Can be specified "
+        "multiple times. Defaults to upstream_overrides/src-override and "
+        "ec-private/src-override.",
+    )
+
     sub_cmds = parser.add_subparsers(required=True)
 
     build_cmd = sub_cmds.add_parser("build", help="Builds all firmware targets")
@@ -326,8 +393,19 @@ def main(args):
         print("Must select a valid sub command!")
         return -1
 
-    # Run selected sub command function
-    return opts.func(opts)
+    if getattr(opts.func, "__name__", "") == "bundle":
+        return opts.func(opts)
+
+    try:
+        repository_prep.find_checkout()
+    except FileNotFoundError:
+        return opts.func(opts)
+
+    # AP builds invoke Portage cros-workon against the host checkout in-place;
+    # prepared_workspace omits ec_dir so CodebasePreparer restores on exit.
+    logging.basicConfig(level=logging.INFO)
+    with repository_prep.prepared_workspace(opts):
+        return opts.func(opts)
 
 
 if __name__ == "__main__":
